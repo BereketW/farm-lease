@@ -1,7 +1,7 @@
 "use client";
 
 import type { UseFormReturn } from "react-hook-form";
-import type { ProposalFormValues } from "./types";
+import type { ProposalFormValues } from "../../entity/form";
 import { StepShell } from "./step-shell";
 import { Metric } from "../_design/metric";
 

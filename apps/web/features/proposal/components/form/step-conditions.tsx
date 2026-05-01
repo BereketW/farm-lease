@@ -3,7 +3,7 @@
 import type { UseFormReturn } from "react-hook-form";
 import { Label } from "@farm-lease/ui/components/label";
 import { Textarea } from "@farm-lease/ui/components/textarea";
-import type { ProposalFormValues } from "./types";
+import type { ProposalFormValues } from "../../entity/form";
 import { StepShell } from "./step-shell";
 
 export function StepConditions({

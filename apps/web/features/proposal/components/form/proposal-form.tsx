@@ -2,15 +2,15 @@
 
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Sparkles, Save, Trash2, Loader2, AlertTriangle } from "lucide-react";
-import { FORM_STEPS } from "./types";
-import { useProposalForm } from "./use-proposal-form";
+import { FORM_STEPS } from "../../entity/form";
+import { useProposalForm } from "../../hooks/use-proposal-form";
 import { StepCluster } from "./step-cluster";
 import { StepTerms } from "./step-terms";
 import { StepConditions } from "./step-conditions";
 import { StepDocuments } from "./step-documents";
 import { StepReview } from "./step-review";
 import { FormStepper } from "./stepper";
-import { useProposalDraft } from "./use-proposal-draft";
+import { useProposalDraft } from "../../hooks/use-proposal-draft";
 
 function relativeSince(ts: number): string {
   const diff = Math.round((Date.now() - ts) / 1000);

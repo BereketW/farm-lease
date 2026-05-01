@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@farm-lease/ui/lib/utils";
-import { listProposals } from "@/lib/api/proposals";
+import { listProposals } from "@/features/proposal/datasource/proposals";
 import type { ProposalSummary } from "@/lib/api/types";
 import { ProposalsTable } from "./proposals-table";
 import { statusGroup } from "../_design/status-pill";

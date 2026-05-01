@@ -18,11 +18,11 @@ import {
   markMessagesRead,
   postMessage,
   uploadDocuments,
-} from "@/lib/api/proposals";
+} from "@/features/proposal/datasource/proposals";
 import type { NegotiationMessage, ProposalDetail } from "@/lib/api/types";
 import { getSocket, useSocketVersion } from "@/lib/socket";
 import { NegotiationMessageBubble } from "./negotiation-message";
-import { proposalDetailKey } from "./use-proposal-detail";
+import { proposalDetailKey } from "../../hooks/use-proposal-detail";
 
 type Props = {
   proposalId: string;

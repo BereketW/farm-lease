@@ -11,13 +11,13 @@ import {
   submitProposalDraft,
   updateProposalDraft,
   uploadDocuments,
-} from "@/lib/api/proposals";
+} from "@/features/proposal/datasource/proposals";
 import {
   FORM_STEPS,
   proposalFormSchema,
   type ProposalFormValues,
   type StepId,
-} from "./types";
+} from "../entity/form";
 import { clearDraft } from "./use-proposal-draft";
 
 export function useProposalForm(defaultClusterId?: string) {

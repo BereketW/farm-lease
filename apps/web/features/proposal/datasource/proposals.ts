@@ -1,11 +1,13 @@
-import { apiFetch, uploadDocuments } from "./client";
+// import { apiFetch, uploadDocuments } from "
+import { apiFetch } from "@/lib/api/client";
+// import { ProposalStatus } from "@/lib/api/types";
 import type {
   NegotiationMessage,
   ProposalDetail,
   ProposalStatus,
   ProposalSummary,
   ProposalViewer,
-} from "./types";
+} from "@/lib/api/types";
 
 export type CreateProposalInput = {
   clusterId: string;

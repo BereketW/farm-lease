@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react";
 import { cn } from "@farm-lease/ui/lib/utils";
-import { FORM_STEPS } from "./types";
+import { FORM_STEPS } from "../../entity/form";
 
 export function FormStepper({ stepIndex }: { stepIndex: number }) {
   const total = FORM_STEPS.length;

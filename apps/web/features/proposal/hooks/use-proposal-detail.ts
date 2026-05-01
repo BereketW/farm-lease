@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getProposal } from "@/lib/api/proposals";
+import { getProposal } from "@/features/proposal/datasource/proposals";
 import { getSocket, useSocketVersion } from "@/lib/socket";
 import type { NegotiationMessage, ProposalDetail, ProposalViewer } from "@/lib/api/types";
 

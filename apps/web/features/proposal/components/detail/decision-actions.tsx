@@ -3,9 +3,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Check, Undo2, X } from "lucide-react";
-import { decideProposal, withdrawProposal } from "@/lib/api/proposals";
+import { decideProposal, withdrawProposal } from "@/features/proposal/datasource/proposals";
 import type { ProposalDetail } from "@/lib/api/types";
-import { proposalDetailKey } from "./use-proposal-detail";
+import { proposalDetailKey } from "../../hooks/use-proposal-detail";
 
 type Props = {
   proposal: ProposalDetail;

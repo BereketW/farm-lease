@@ -7,9 +7,9 @@ import { ArrowRightCircle } from "lucide-react";
 import { Input } from "@farm-lease/ui/components/input";
 import { Label } from "@farm-lease/ui/components/label";
 import { Textarea } from "@farm-lease/ui/components/textarea";
-import { createRevision } from "@/lib/api/proposals";
+import { createRevision } from "@/features/proposal/datasource/proposals";
 import type { ProposalDetail } from "@/lib/api/types";
-import { proposalDetailKey } from "./use-proposal-detail";
+import { proposalDetailKey } from "../../hooks/use-proposal-detail";
 
 export function RevisionForm({ proposal }: { proposal: ProposalDetail }) {
   const queryClient = useQueryClient();

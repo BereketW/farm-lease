@@ -6,9 +6,9 @@ import {
   createProposalDraft,
   deleteProposalDraft,
   updateProposalDraft,
-} from "@/lib/api/proposals";
+} from "@/features/proposal/datasource/proposals";
 import type { ProposalDetail } from "@/lib/api/types";
-import type { ProposalFormValues } from "./types";
+import type { ProposalFormValues } from "../entity/form";
 
 const STORAGE_KEY = "farmlease:proposal-draft-id:v2";
 const SAVE_DELAY_MS = 1500;

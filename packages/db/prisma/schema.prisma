@@ -1,0 +1,431 @@
+// ============================================================
+// FARMLEASE - PRISMA SCHEMA (Better Auth Compatible)
+// Better Auth manages: user, session, account, verification
+// FarmLease adds: role profiles, clusters, proposals, etc.
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  INVESTOR
+  FARMER
+  REPRESENTATIVE
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum ClusterStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ProposalStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_NEGOTIATION
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum AgreementStatus {
+  DRAFT
+  PENDING_SIGNATURES
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum ReceiptStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+// ============================================================
+// BETTER AUTH REQUIRED TABLES
+// These are required by Better Auth — do not rename them
+// ============================================================
+
+model user {
+  id            String     @id @default(uuid())
+  name          String
+  email         String     @unique
+  emailVerified Boolean    @default(false)
+  image         String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // FarmLease custom fields added on top of Better Auth base
+  role          Role       @default(INVESTOR)
+  status        UserStatus @default(PENDING)
+  phone         String?
+
+  // Better Auth relations
+  sessions      session[]
+  accounts      account[]
+
+  // FarmLease role profiles (one-to-one, nullable)
+  investorProfile       InvestorProfile?
+  farmerProfile         FarmerProfile?
+  representativeProfile RepresentativeProfile?
+
+  // FarmLease relations
+  clusterMemberships    ClusterFarmer[]
+  clusterManagement     ClusterRepresentative[]
+  proposals             Proposal[]
+  sentMessages          NegotiationMessage[]
+  signatories           AgreementSignature[]
+  uploadedReceipts      PaymentReceipt[]
+  verifiedReceipts      PaymentReceipt[]       @relation("ReceiptVerifier")
+  notifications         Notification[]
+  auditLogs             AuditLog[]
+  aiRecommendations     AIRecommendation[]
+  aiPredictions         AIPrediction[]
+
+  @@map("user")
+}
+
+model session {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model account {
+  id           String    @id @default(uuid())
+  accountId    String
+  providerId   String
+  userId       String
+  user         user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken  String?
+  refreshToken String?
+  idToken      String?
+  expiresAt    DateTime?
+  password     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+// ============================================================
+// FARMLEASE ROLE PROFILES
+// ============================================================
+
+model InvestorProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budget           Decimal? @db.Decimal(15, 2)
+  preferredRegions String[]
+  preferredCrops   String[]
+  verified         Boolean  @default(false)
+  bio              String?
+  companyName      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("investor_profiles")
+}
+
+model FarmerProfile {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  user       user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  landShares Decimal? @db.Decimal(10, 4)
+  idVerified Boolean  @default(false)
+  region     String?
+  bio        String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("farmer_profiles")
+}
+
+model RepresentativeProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissions String[]
+  verified    Boolean  @default(false)
+  bio         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("representative_profiles")
+}
+
+// ============================================================
+// CLUSTER & LAND
+// ============================================================
+
+model Cluster {
+  id           String        @id @default(uuid())
+  name         String
+  description  String?
+  location     String
+  region       String
+  geodata      Json
+  coordinates  Json
+  totalArea    Decimal?      @db.Decimal(10, 2)
+  cropTypes    String[]
+  status       ClusterStatus @default(PENDING)
+  documents    String[]
+  registeredAt DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  farmers         ClusterFarmer[]
+  representatives ClusterRepresentative[]
+  proposals       Proposal[]
+  aiPredictions   AIPrediction[]
+
+  @@map("clusters")
+}
+
+model ClusterFarmer {
+  id        String   @id @default(uuid())
+  clusterId String
+  cluster   Cluster  @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime @default(now())
+  landShare Decimal? @db.Decimal(10, 4)
+
+  @@unique([clusterId, userId])
+  @@map("cluster_farmers")
+}
+
+model ClusterRepresentative {
+  id         String   @id @default(uuid())
+  clusterId  String
+  cluster    Cluster  @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+  userId     String
+  user       user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isPrimary  Boolean  @default(false)
+  assignedAt DateTime @default(now())
+
+  @@unique([clusterId, userId])
+  @@map("cluster_representatives")
+}
+
+// ============================================================
+// PROPOSAL & NEGOTIATION
+// ============================================================
+
+model Proposal {
+  id             String         @id @default(uuid())
+  clusterId      String
+  cluster        Cluster        @relation(fields: [clusterId], references: [id])
+  investorId     String
+  investor       user           @relation(fields: [investorId], references: [id])
+  terms          Json
+  budget         Decimal        @db.Decimal(15, 2)
+  durationMonths Int
+  startDate      DateTime?
+  cropIntended   String?
+  documents      String[]
+  status         ProposalStatus @default(DRAFT)
+  rejectionReason String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  messages  NegotiationMessage[]
+  agreement Agreement?
+
+  @@map("proposals")
+}
+
+model NegotiationMessage {
+  id           String   @id @default(uuid())
+  proposalId   String
+  proposal     Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  senderId     String
+  sender       user     @relation(fields: [senderId], references: [id])
+  message      String
+  attachments  String[]
+  counterTerms Json?
+  isRead       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@map("negotiation_messages")
+}
+
+// ============================================================
+// AGREEMENT & CONTRACT
+// ============================================================
+
+model Agreement {
+  id         String          @id @default(uuid())
+  proposalId String          @unique
+  proposal   Proposal        @relation(fields: [proposalId], references: [id])
+  startDate  DateTime
+  endDate    DateTime
+  terms      Json
+  clauses    Json
+  status     AgreementStatus @default(DRAFT)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  signatures AgreementSignature[]
+  receipts   PaymentReceipt[]
+
+  @@map("agreements")
+}
+
+model AgreementSignature {
+  id          String    @id @default(uuid())
+  agreementId String
+  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  signerId    String
+  signer      user      @relation(fields: [signerId], references: [id])
+  role        Role
+  signedAt    DateTime  @default(now())
+
+  @@unique([agreementId, signerId])
+  @@map("agreement_signatures")
+}
+
+// ============================================================
+// PAYMENT
+// ============================================================
+
+model PaymentReceipt {
+  id                 String        @id @default(uuid())
+  agreementId        String
+  agreement          Agreement     @relation(fields: [agreementId], references: [id])
+  uploaderId         String
+  uploader           user          @relation(fields: [uploaderId], references: [id])
+  amount             Decimal       @db.Decimal(15, 2)
+  datePaid           DateTime
+  imageUrl           String
+  notes              String?
+  verificationStatus ReceiptStatus @default(PENDING)
+  verifiedById       String?
+  verifiedBy         user?         @relation("ReceiptVerifier", fields: [verifiedById], references: [id])
+  verifiedAt         DateTime?
+  rejectionReason    String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@map("payment_receipts")
+}
+
+// ============================================================
+// AI
+// ============================================================
+
+model AIRecommendation {
+  id             String   @id @default(uuid())
+  investorId     String
+  investor       user     @relation(fields: [investorId], references: [id])
+  criteria       Json
+  rankedClusters Json
+  modelVersion   String   @default("v1")
+  createdAt      DateTime @default(now())
+
+  @@map("ai_recommendations")
+}
+
+model AIPrediction {
+  id             String   @id @default(uuid())
+  clusterId      String
+  cluster        Cluster  @relation(fields: [clusterId], references: [id])
+  requestedById  String
+  requestedBy    user     @relation(fields: [requestedById], references: [id])
+  inputFeatures  Json
+  predictedYield Decimal  @db.Decimal(15, 4)
+  predictedCost  Decimal  @db.Decimal(15, 2)
+  predictedROI   Decimal  @db.Decimal(5, 2)
+  confidence     Decimal  @db.Decimal(3, 2)
+  riskLevel      String?
+  modelVersion   String   @default("v1")
+  generatedAt    DateTime @default(now())
+
+  @@map("ai_predictions")
+}
+
+// ============================================================
+// NOTIFICATIONS & AUDIT
+// ============================================================
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  user      user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  metadata  Json?
+  createdAt DateTime  @default(now())
+
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String
+  actor      user     @relation(fields: [actorId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model EmailLog {
+  id          String   @id @default(uuid())
+  recipient   String
+  subject     String
+  status      String   // "SENT" | "FAILED"
+  attempts    Int      @default(1)
+  lastError   String?
+  notifType   String?  // e.g. "PROPOSAL_SUBMITTED"
+  sentAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([recipient])
+  @@index([status])
+  @@index([createdAt])
+  @@map("email_logs")
+}

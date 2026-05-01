@@ -1,11 +1,11 @@
-import { apiFetch } from "./client";
+import { apiFetch } from "@/lib/api/client";
 import type {
   AgreementDetail,
   AgreementSignature,
   AgreementStatus,
   AgreementSummary,
   PaymentReceipt,
-} from "./types";
+} from "@/lib/api/types";
 
 export function listAgreements(params?: {
   status?: AgreementStatus;

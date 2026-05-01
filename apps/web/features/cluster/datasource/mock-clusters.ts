@@ -1,4 +1,4 @@
-import type { ClusterSummary } from "./types";
+import type { ClusterSummary } from "@/lib/api/types";
 
 export const MOCK_CLUSTERS: ClusterSummary[] = [
   {

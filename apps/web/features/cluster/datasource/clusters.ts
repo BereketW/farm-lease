@@ -1,6 +1,6 @@
-import { apiFetch } from "./client";
+import { apiFetch } from "@/lib/api/client";
 import { MOCK_CLUSTERS } from "./mock-clusters";
-import type { ClusterDetail, ClusterSummary } from "./types";
+import type { ClusterDetail, ClusterSummary } from "@/lib/api/types";
 
 export async function listClusters(params?: {
   region?: string;

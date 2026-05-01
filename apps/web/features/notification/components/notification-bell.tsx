@@ -13,7 +13,7 @@ import {
 import { Separator } from "@farm-lease/ui/components/separator";
 import { NotificationList } from "./notification-list";
 import type { NotificationItemData } from "./notification-item";
-import { extractUrl, useNotifications } from "./use-notifications";
+import { extractUrl, useNotifications } from "../hooks/use-notifications";
 
 export function NotificationBell() {
   const router = useRouter();

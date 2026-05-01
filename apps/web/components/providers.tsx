@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster, toast } from "sonner";
 import { getSocket, resetSocket } from "@/lib/socket";
-import { markNotificationRead } from "@/lib/notifications";
+import { markNotificationRead } from "@/features/notification/datasource/notifications";
 import { useCurrentUserId } from "@/lib/use-current-user";
 
 type NotificationPayload = {

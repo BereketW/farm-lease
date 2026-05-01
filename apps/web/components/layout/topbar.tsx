@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { ChevronRight, Menu } from "lucide-react";
 import { Button } from "@farm-lease/ui/components/button";
 import { cn } from "@farm-lease/ui/lib/utils";
-import { NotificationBell } from "@/components/notifications/notification-bell";
+import { NotificationBell } from "@/features/notification/components/notification-bell";
 import { DevRoleSwitcher } from "@/components/dev-role-switcher";
 import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sprout } from "lucide-react";
 import { cn } from "@farm-lease/ui/lib/utils";
-import { NotificationBell } from "@/components/notifications/notification-bell";
+import { NotificationBell } from "@/features/notification/components/notification-bell";
 import { DevRoleSwitcher } from "@/components/dev-role-switcher";
 
 const NAV = [

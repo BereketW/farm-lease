@@ -66,7 +66,7 @@ const FRAUNCES = "font-[family-name:var(--font-fraunces)]";
 
 export default function Home() {
   return (
-    <main className="bg-white text-zinc-900">
+    <main className="bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <StickyNav />
       <Hero />
       <StatsBand />
@@ -105,8 +105,8 @@ function StickyNav() {
         className={cn(
           "flex w-full max-w-6xl items-center justify-between rounded-full px-2 py-2 transition-all duration-300",
           scrolled
-            ? "bg-white/95 shadow-lg ring-1 ring-zinc-200/80 backdrop-blur-md"
-            : "bg-white/90 shadow-md ring-1 ring-white/30 backdrop-blur"
+            ? "bg-white/95 shadow-lg ring-1 ring-zinc-200/80 backdrop-blur-md dark:bg-zinc-950/95 dark:ring-zinc-800"
+            : "bg-white/90 shadow-md ring-1 ring-white/30 backdrop-blur dark:bg-zinc-950/90 dark:ring-white/10"
         )}
       >
         <Link href="/" className="flex items-center gap-2 pl-3 pr-4">
@@ -119,7 +119,7 @@ function StickyNav() {
           </span>
         </Link>
 
-        <ul className="hidden items-center gap-8 text-sm font-medium text-zinc-700 md:flex">
+        <ul className="hidden items-center gap-8 text-sm font-medium text-zinc-700 dark:text-zinc-300 md:flex">
           {[
             { href: "#features", label: "Features" },
             { href: "#reports", label: "Capabilities" },
@@ -140,7 +140,7 @@ function StickyNav() {
         <div className="flex items-center gap-2">
           <Link
             href="/login"
-            className="hidden rounded-full px-4 py-2 text-sm font-medium text-zinc-700 transition hover:text-emerald-700 sm:inline-block"
+            className="hidden rounded-full px-4 py-2 text-sm font-medium text-zinc-700 transition hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400 sm:inline-block"
           >
             Sign in
           </Link>
@@ -252,10 +252,10 @@ function StatsBand() {
     { value: "38,000+", label: "Acres Under Lease" },
   ];
   return (
-    <section className="border-b border-zinc-100 bg-[#f6f3ec]">
+    <section className="border-b border-zinc-100 bg-[#f6f3ec] dark:border-zinc-800 dark:bg-zinc-900">
       <div className="mx-auto max-w-5xl px-6 py-24 text-center">
         <Reveal>
-          <h2 className="mx-auto max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-emerald-950 md:text-4xl">
+          <h2 className="mx-auto max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-emerald-950 dark:text-emerald-50 md:text-4xl">
             <span className={`${FRAUNCES} italic font-normal`}>
               Revolutionizing
             </span>{" "}
@@ -267,10 +267,10 @@ function StatsBand() {
         <div className="mt-14 grid grid-cols-2 gap-8 md:grid-cols-4">
           {stats.map((s, i) => (
             <Reveal key={s.label} delay={i * 100}>
-              <div className="text-4xl font-semibold tracking-tight text-emerald-950">
+              <div className="text-4xl font-semibold tracking-tight text-emerald-950 dark:text-emerald-50">
                 {s.value}
               </div>
-              <div className="mt-1 text-xs uppercase tracking-[0.16em] text-zinc-500">
+              <div className="mt-1 text-xs uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
                 {s.label}
               </div>
             </Reveal>
@@ -295,7 +295,7 @@ function PartnersStrip() {
     "Arsi Wheat Co-op",
   ];
   return (
-    <section className="border-b border-zinc-100 bg-white py-10">
+    <section className="border-b border-zinc-100 bg-white py-10 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="mx-auto max-w-6xl px-6">
         <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
           Our Partners
@@ -327,17 +327,17 @@ function FeatureSplit() {
     "Automatic agreement generation",
   ];
   return (
-    <section id="features" className="bg-white">
+    <section id="features" className="bg-white dark:bg-zinc-950">
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 md:grid-cols-2">
         <Reveal>
-          <h2 className="text-4xl font-semibold leading-tight tracking-tight text-emerald-950 md:text-5xl">
+          <h2 className="text-4xl font-semibold leading-tight tracking-tight text-emerald-950 dark:text-emerald-50 md:text-5xl">
             Comprehensive{" "}
             <span className={`${FRAUNCES} italic font-normal`}>
               Proposal Management
             </span>{" "}
             and Negotiation Solutions
           </h2>
-          <p className="mt-5 max-w-md text-base leading-relaxed text-zinc-600">
+          <p className="mt-5 max-w-md text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
             Draft, submit, negotiate, and activate farmland lease agreements in
             one transparent workspace — purpose-built for investors and cluster
             representatives.
@@ -347,7 +347,7 @@ function FeatureSplit() {
               <li
                 key={text}
                 style={{ transitionDelay: `${i * 80}ms` }}
-                className="flex items-start gap-3 text-sm text-zinc-700"
+                className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300"
               >
                 <span className="mt-0.5 grid h-5 w-5 place-items-center rounded-full bg-emerald-600 text-white">
                   <Check className="h-3 w-3" />
@@ -405,10 +405,10 @@ function PreferredPlatform() {
     },
   ];
   return (
-    <section className="bg-[#f6f3ec] py-24">
+    <section className="bg-[#f6f3ec] py-24 dark:bg-zinc-900">
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
-          <h2 className="max-w-2xl text-4xl font-semibold leading-tight tracking-tight text-emerald-950 md:text-5xl">
+          <h2 className="max-w-2xl text-4xl font-semibold leading-tight tracking-tight text-emerald-950 dark:text-emerald-50 md:text-5xl">
             Customer-
             <span className={`${FRAUNCES} italic font-normal`}>Preferred</span>{" "}
             Platform
@@ -420,7 +420,7 @@ function PreferredPlatform() {
             <Reveal
               key={c.tag}
               delay={i * 120}
-              className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-100 transition hover:-translate-y-1 hover:shadow-xl"
+              className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-100 transition hover:-translate-y-1 hover:shadow-xl dark:bg-zinc-950 dark:ring-zinc-800"
             >
               <div className="aspect-4/3 overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -431,11 +431,11 @@ function PreferredPlatform() {
                 />
               </div>
               <div className="p-5">
-                <p className="text-xs uppercase tracking-[0.16em] text-emerald-700">
+                <p className="text-xs uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-500">
                   {c.tag}
                 </p>
                 <p
-                  className="mt-2 text-lg font-semibold text-emerald-950"
+                  className="mt-2 text-lg font-semibold text-emerald-950 dark:text-emerald-50"
                   dangerouslySetInnerHTML={{ __html: c.title }}
                 />
               </div>
@@ -453,10 +453,10 @@ function PreferredPlatform() {
 
 function Testimonial() {
   return (
-    <section id="testimonials" className="bg-white py-20">
+    <section id="testimonials" className="bg-white py-20 dark:bg-zinc-950">
       <div className="mx-auto max-w-6xl px-6 text-center">
         <Reveal>
-          <h2 className="text-4xl font-semibold leading-tight tracking-tight text-emerald-950 md:text-5xl">
+          <h2 className="text-4xl font-semibold leading-tight tracking-tight text-emerald-950 dark:text-emerald-50 md:text-5xl">
             What Our <span className={`${FRAUNCES} italic font-normal`}>Clients</span> Say
           </h2>
         </Reveal>
@@ -472,13 +472,13 @@ function Testimonial() {
 
         <div className="relative z-10 flex h-full items-center justify-center px-6">
           <Reveal>
-            <figure className="max-w-md rounded-2xl bg-white/95 p-6 shadow-xl backdrop-blur">
+            <figure className="max-w-md rounded-2xl bg-white/95 p-6 shadow-xl backdrop-blur dark:bg-zinc-900/95">
               <div className="flex items-center gap-0.5 text-amber-300">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star key={i} className="h-3.5 w-3.5 fill-current" />
                 ))}
               </div>
-              <blockquote className="mt-3 text-sm leading-relaxed text-zinc-800">
+              <blockquote className="mt-3 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
                 “FarmLease cut our proposal-to-signature cycle from weeks to days.
                 The negotiation chat and digital signing made every step
                 transparent to both sides of the table.”
@@ -488,7 +488,7 @@ function Testimonial() {
                   AM
                 </span>
                 <span>
-                  <span className="block text-sm font-semibold text-emerald-950">
+                  <span className="block text-sm font-semibold text-emerald-950 dark:text-emerald-50">
                     Abel M.
                   </span>
                   <span className="block text-xs text-zinc-500">
@@ -522,10 +522,10 @@ function ReportsChecklist() {
   ];
   const highlighted = "Digital Signatures";
   return (
-    <section id="reports" className="bg-white py-24">
+    <section id="reports" className="bg-white py-24 dark:bg-zinc-950">
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 md:grid-cols-2">
         <Reveal>
-          <h2 className="text-4xl font-semibold leading-tight tracking-tight text-emerald-950 md:text-5xl">
+          <h2 className="text-4xl font-semibold leading-tight tracking-tight text-emerald-950 dark:text-emerald-50 md:text-5xl">
             What Leasing{" "}
             <span className={`${FRAUNCES} italic font-normal`}>Capabilities</span>{" "}
             Do You Need?
@@ -539,7 +539,7 @@ function ReportsChecklist() {
                   className={
                     isHighlight
                       ? "relative flex items-center gap-3 rounded-full bg-linear-to-r from-emerald-500 to-lime-400 px-5 py-3 text-sm font-semibold text-white shadow-md"
-                      : "flex items-center gap-3 px-5 py-2 text-sm text-zinc-700"
+                      : "flex items-center gap-3 px-5 py-2 text-sm text-zinc-700 dark:text-zinc-300"
                   }
                 >
                   <span
@@ -565,16 +565,16 @@ function ReportsChecklist() {
             alt="FarmLease device preview"
             className="w-full rounded-3xl shadow-2xl"
           />
-          <div className="absolute -bottom-6 -left-6 hidden rounded-2xl bg-white p-4 shadow-xl ring-1 ring-zinc-100 md:block">
+          <div className="absolute -bottom-6 -left-6 hidden rounded-2xl bg-white p-4 shadow-xl ring-1 ring-zinc-100 dark:bg-zinc-900 dark:ring-zinc-800 md:block">
             <div className="flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-full bg-emerald-600 text-white">
                 <Sprout className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
                   Live negotiation
                 </p>
-                <p className="text-sm font-semibold text-emerald-950">
+                <p className="text-sm font-semibold text-emerald-950 dark:text-emerald-50">
                   Proposal updated
                 </p>
               </div>

@@ -111,7 +111,7 @@ function StickyNav() {
         )}
       >
         <Link href="/" className="flex items-center pl-3 pr-4">
-          <img src="/icon-full.svg" alt="FarmLease" className="h-8 w-auto" />
+          <img src="/icon-full.svg" alt="FarmLease" className="h-10 w-auto" />
         </Link>
 
         <ul className="hidden items-center gap-8 text-sm font-medium text-zinc-700 dark:text-zinc-300 md:flex">

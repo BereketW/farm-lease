@@ -52,9 +52,9 @@ function SidebarContent({ collapsed, onToggle }: SidebarContentProps) {
       >
         <Link href="/" className="flex items-center gap-2.5 min-w-0">
           {collapsed ? (
-            <img src="/icon.svg" alt="FarmLease" className="h-8 w-8 shrink-0" />
+            <img src="/icon.svg" alt="FarmLease" className="h-10 w-10 shrink-0" />
           ) : (
-            <img src="/icon-full.svg" alt="FarmLease" className="h-7 w-auto" />
+            <img src="/icon-full.svg" alt="FarmLease" className="h-10 w-auto" />
           )}
         </Link>
       </div>

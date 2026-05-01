@@ -38,7 +38,7 @@ export function AuthSplit({
             href="/"
             className="inline-flex items-center transition hover:opacity-80"
           >
-            <img src="/icon-full.svg" alt="FarmLease" className="h-8 w-auto" />
+            <img src="/icon-full.svg" alt="FarmLease" className="h-10 w-auto" />
           </Link>
           <Link
             href="/"

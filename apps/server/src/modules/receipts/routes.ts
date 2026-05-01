@@ -7,7 +7,7 @@ import {
   ReceiptStatus,
   Role,
 } from "@prisma/client";
-import { requireSession } from "../../lib/auth";
+import { requireActive, requireSession } from "../../lib/auth";
 import { receiptUpload, fileToPublicUrl } from "../../lib/storage";
 import { logAudit } from "../../lib/audit";
 import { realtime } from "../../realtime/io";
@@ -27,6 +27,7 @@ import {
 
 const router = Router();
 router.use(requireSession);
+router.use(requireActive);
 
 // ---------- UPLOAD ----------
 

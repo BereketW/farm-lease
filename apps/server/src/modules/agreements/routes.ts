@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "@farm-lease/db";
 import { AgreementStatus, Prisma, Role } from "@prisma/client";
-import { requireSession } from "../../lib/auth";
+import { requireActive, requireSession } from "../../lib/auth";
 import { logAudit } from "../../lib/audit";
 import { realtime } from "../../realtime/io";
 import {
@@ -20,6 +20,7 @@ import {
 
 const router = Router();
 router.use(requireSession);
+router.use(requireActive);
 
 // ---------- LIST ----------
 

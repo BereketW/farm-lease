@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import type { Role } from "@prisma/client";
+import { prisma } from "@farm-lease/db";
 import { getRequestSession } from "./session";
 
 declare global {
@@ -40,4 +41,23 @@ export function requireRole(...roles: Role[]) {
     }
     next();
   };
+}
+
+export async function requireActive(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: { status: true },
+    });
+    if (user?.status !== "ACTIVE") {
+      return res.status(403).json({ error: "PENDING_ONBOARDING" });
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
 }

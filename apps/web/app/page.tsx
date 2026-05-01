@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@farm-lease/ui/lib/utils";
 import { useInView } from "@/lib/use-in-view";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 /* ------------------------------- Reveal ---------------------------------- */
 
@@ -138,6 +139,7 @@ function StickyNav() {
         </ul>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Link
             href="/login"
             className="hidden rounded-full px-4 py-2 text-sm font-medium text-zinc-700 transition hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400 sm:inline-block"

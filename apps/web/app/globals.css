@@ -1,0 +1,10 @@
+@import "@farm-lease/ui/styles/globals.css";
+
+@keyframes heroZoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}

@@ -40,7 +40,7 @@ export function Topbar({
   }
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border/60 bg-background px-4">
+    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-zinc-200/60 bg-background/80 px-4 backdrop-blur-sm dark:border-zinc-800">
       {/* Mobile hamburger */}
       <Button
         variant="ghost"

@@ -1,0 +1,25 @@
+{
+  "name": "farm-lease",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.17.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "check-types": "turbo run check-types",
+    "dev:web": "turbo run dev --filter=@farm-lease/web",
+    "dev:server": "turbo run dev --filter=@farm-lease/server",
+    "db:push": "turbo run db:push --filter=@farm-lease/db",
+    "db:generate": "turbo run db:generate --filter=@farm-lease/db",
+    "db:migrate": "turbo run db:migrate --filter=@farm-lease/db",
+    "db:studio": "turbo run db:studio --filter=@farm-lease/db"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

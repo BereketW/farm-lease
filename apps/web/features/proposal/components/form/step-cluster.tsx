@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { UseFormReturn } from "react-hook-form";
 import { Check, MapPin, Users } from "lucide-react";
 import { cn } from "@farm-lease/ui/lib/utils";
-import { listClusters } from "@/lib/api/clusters";
+import { listClusters } from "@/features/cluster/datasource/clusters";
 import type { ProposalFormValues } from "../../entity/form";
 import { StepShell } from "./step-shell";
 

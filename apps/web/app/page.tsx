@@ -110,14 +110,8 @@ function StickyNav() {
             : "bg-white/90 shadow-md ring-1 ring-white/30 backdrop-blur dark:bg-zinc-950/90 dark:ring-white/10"
         )}
       >
-        <Link href="/" className="flex items-center gap-2 pl-3 pr-4">
-          <span className="relative grid h-8 w-8 place-items-center rounded-full bg-emerald-600 text-white">
-            <Sprout className="h-4 w-4" />
-            <span className="absolute -inset-1 animate-ping rounded-full bg-emerald-400/30" />
-          </span>
-          <span className="text-base font-semibold tracking-tight text-emerald-950">
-            FarmLease
-          </span>
+        <Link href="/" className="flex items-center pl-3 pr-4">
+          <img src="/icon-full.svg" alt="FarmLease" className="h-8 w-auto" />
         </Link>
 
         <ul className="hidden items-center gap-8 text-sm font-medium text-zinc-700 dark:text-zinc-300 md:flex">

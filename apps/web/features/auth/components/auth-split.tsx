@@ -36,12 +36,9 @@ export function AuthSplit({
         <div className="flex items-center justify-between">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 transition hover:text-emerald-600"
+            className="inline-flex items-center transition hover:opacity-80"
           >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-emerald-600 text-white">
-              <Sprout className="h-4 w-4" />
-            </span>
-            <span className="tracking-tight">FarmLease</span>
+            <img src="/icon-full.svg" alt="FarmLease" className="h-8 w-auto" />
           </Link>
           <Link
             href="/"

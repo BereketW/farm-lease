@@ -51,13 +51,10 @@ function SidebarContent({ collapsed, onToggle }: SidebarContentProps) {
         )}
       >
         <Link href="/" className="flex items-center gap-2.5 min-w-0">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-600 text-white shadow-sm">
-            <Sprout className="h-4 w-4" />
-          </span>
-          {!collapsed && (
-            <span className="truncate text-sm font-semibold tracking-tight text-foreground">
-              FarmLease
-            </span>
+          {collapsed ? (
+            <img src="/icon.svg" alt="FarmLease" className="h-8 w-8 shrink-0" />
+          ) : (
+            <img src="/icon-full.svg" alt="FarmLease" className="h-7 w-auto" />
           )}
         </Link>
       </div>

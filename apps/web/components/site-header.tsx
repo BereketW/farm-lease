@@ -18,13 +18,8 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-emerald-100/70 bg-gradient-to-b from-white via-white to-emerald-50/40 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-5">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-white shadow-sm">
-            <Sprout className="h-4 w-4" />
-          </span>
-          <span className="text-base font-semibold tracking-tight text-emerald-900">
-            FarmLease
-          </span>
+        <Link href="/" className="flex items-center">
+          <img src="/icon-full.svg" alt="FarmLease" className="h-8 w-auto" />
         </Link>
 
         <nav className="flex items-center gap-1 text-sm">

@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogOut, User as UserIcon, LogIn } from "lucide-react";
-import { signOut } from "@/lib/auth-client";
-import { useAuth } from "@/hooks/use-auth";
+import { signOut } from "@/features/auth/datasource/auth-client";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,

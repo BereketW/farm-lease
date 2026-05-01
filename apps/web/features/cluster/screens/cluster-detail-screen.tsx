@@ -14,7 +14,7 @@ import {
   Plus,
 } from "lucide-react";
 import { getCluster } from "@/features/cluster/datasource/clusters";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import { cn } from "@farm-lease/ui/lib/utils";
 
 export function ClusterDetailScreen({

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { getAgreement, signAgreement, cancelAgreement } from "@/features/agreement/datasource/agreements";
 import { useCurrentUserId } from "@/lib/use-current-user";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import { cn } from "@farm-lease/ui/lib/utils";
 import { Button } from "@farm-lease/ui/components/button";
 import { ReceiptUploadDialog } from "@/features/agreement/components/receipt-upload-dialog";

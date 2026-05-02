@@ -1,4 +1,5 @@
 import { PrismaClient, Role, UserStatus } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -19,7 +20,28 @@ async function main() {
     },
   });
 
+  // Create account with password for admin (Better Auth stores passwords in account table)
+  const existingAccount = await prisma.account.findFirst({
+    where: {
+      userId: admin.id,
+      providerId: 'credential',
+    },
+  });
+
+  if (!existingAccount) {
+    const password = await bcrypt.hash('admin123', 10);
+    await prisma.account.create({
+      data: {
+        accountId: admin.id,
+        providerId: 'credential',
+        userId: admin.id,
+        password,
+      },
+    });
+  }
+
   console.log('✅ Admin user created:', admin.email);
+  console.log('🔐 Default password: admin123');
   console.log('🎉 Seed completed successfully!');
 }
 

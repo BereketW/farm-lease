@@ -1,6 +1,8 @@
 # FarmLease DB and Domain-State Specification
 
-Last updated: 2026-05-01
+Last updated: 2026-05-02
+
+Recent changes (2026-05-01): A new `EmailLog` model was added to the Prisma schema and a corresponding migration is present at `packages/db/prisma/migrations/20260501101355_add_email_logs/`. The mailer persists delivery attempts to this table; the table is append-only and indexed on `recipient`, `status`, and `createdAt`.
 
 This document is derived from `packages/db/prisma/schema.prisma` and the observed runtime behavior in `apps/server/src`. When runtime behavior and schema shape differ, the runtime rules below describe how records actually move through the system.
 
@@ -62,28 +64,28 @@ Better Auth owns the base authentication tables (`user`, `session`, `account`, `
 
 ## 3. Entity catalog
 
-| Model | Purpose | Key constraints and runtime notes |
-| --- | --- | --- |
-| `user` | Authenticated person and root identity for all app access. | `email` is unique. `role` defaults to `INVESTOR`. `status` defaults to `PENDING`. Deleting a user cascades sessions and accounts through Better Auth and cascades many FarmLease relations. |
-| `session` | Better Auth session record. | Unique `token`. Cascades on user delete. Used by `getRequestSession` and auth guards. |
-| `account` | Better Auth linked login provider record. | Stores provider credentials and tokens. Cascades on user delete. |
-| `verification` | Better Auth verification records. | Standalone auth verification table. |
-| `InvestorProfile` | Investor-specific profile data. | One-to-one with `user` via unique `userId`. Created in `/users/setup-profile` for `INVESTOR`. |
-| `FarmerProfile` | Farmer-specific profile data. | One-to-one with `user` via unique `userId`. Created in `/users/setup-profile` for `FARMER`. |
-| `RepresentativeProfile` | Representative-specific profile data. | One-to-one with `user` via unique `userId`. Created in `/users/setup-profile` for `REPRESENTATIVE`. |
-| `Cluster` | Cluster/land aggregate that proposals target. | Contains identity, location, geodata, coordinates, area, crop types, documents, and status. Has many farmers, representatives, proposals, and AI predictions. |
-| `ClusterFarmer` | Membership join table between a cluster and a farmer user. | Composite unique on `(clusterId, userId)`. Deletion cascades from both sides. |
-| `ClusterRepresentative` | Representative assignment join table. | Composite unique on `(clusterId, userId)`. `isPrimary` marks the preferred representative for notifications and UI fallbacks. |
-| `Proposal` | Negotiation record between an investor and a cluster. | Belongs to one cluster and one investor. Holds mutable JSON terms, budget, duration, dates, crop intent, documents, status, and rejection reason. One proposal can produce at most one agreement. |
-| `NegotiationMessage` | Proposal chat and counter-term history. | Belongs to one proposal and one sender. Tracks attachments, optional counter-terms, and read state. Deleted with proposal. |
-| `Agreement` | Accepted proposal turned into a contract draft and later lease. | One-to-one with proposal via unique `proposalId`. Stores contract dates, JSON terms, JSON clauses, and lifecycle status. |
-| `AgreementSignature` | Signature record for an agreement signer. | Composite unique on `(agreementId, signerId)`. Stores signer role and signed timestamp. Deleted with agreement. |
-| `PaymentReceipt` | Proof of payment uploaded for an agreement. | Belongs to one agreement and one uploader. Stores amount, date paid, file URL, optional notes, verification state, verifier, and rejection reason. |
-| `AIRecommendation` | Investor recommendation output. | Stores criteria and ranked clusters payloads plus model version. |
-| `AIPrediction` | Cluster prediction output. | Stores request features and predicted yield, cost, ROI, confidence, risk, and model version. |
-| `Notification` | In-app notification fanout target. | Belongs to one user. `isRead` and `readAt` model inbox state. `metadata` carries deep links and related ids. |
-| `AuditLog` | Append-only audit trail of user and system actions. | Records actor, action, target type/id, and freeform JSON details. |
-| `EmailLog` | Append-only email delivery log. | Written by the mailer after each send attempt sequence. Tracks recipient, subject, status, attempts, timestamps, and failure text. |
+| Model                   | Purpose                                                         | Key constraints and runtime notes                                                                                                                                                                 |
+| ----------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user`                  | Authenticated person and root identity for all app access.      | `email` is unique. `role` defaults to `INVESTOR`. `status` defaults to `PENDING`. Deleting a user cascades sessions and accounts through Better Auth and cascades many FarmLease relations.       |
+| `session`               | Better Auth session record.                                     | Unique `token`. Cascades on user delete. Used by `getRequestSession` and auth guards.                                                                                                             |
+| `account`               | Better Auth linked login provider record.                       | Stores provider credentials and tokens. Cascades on user delete.                                                                                                                                  |
+| `verification`          | Better Auth verification records.                               | Standalone auth verification table.                                                                                                                                                               |
+| `InvestorProfile`       | Investor-specific profile data.                                 | One-to-one with `user` via unique `userId`. Created in `/users/setup-profile` for `INVESTOR`.                                                                                                     |
+| `FarmerProfile`         | Farmer-specific profile data.                                   | One-to-one with `user` via unique `userId`. Created in `/users/setup-profile` for `FARMER`.                                                                                                       |
+| `RepresentativeProfile` | Representative-specific profile data.                           | One-to-one with `user` via unique `userId`. Created in `/users/setup-profile` for `REPRESENTATIVE`.                                                                                               |
+| `Cluster`               | Cluster/land aggregate that proposals target.                   | Contains identity, location, geodata, coordinates, area, crop types, documents, and status. Has many farmers, representatives, proposals, and AI predictions.                                     |
+| `ClusterFarmer`         | Membership join table between a cluster and a farmer user.      | Composite unique on `(clusterId, userId)`. Deletion cascades from both sides.                                                                                                                     |
+| `ClusterRepresentative` | Representative assignment join table.                           | Composite unique on `(clusterId, userId)`. `isPrimary` marks the preferred representative for notifications and UI fallbacks.                                                                     |
+| `Proposal`              | Negotiation record between an investor and a cluster.           | Belongs to one cluster and one investor. Holds mutable JSON terms, budget, duration, dates, crop intent, documents, status, and rejection reason. One proposal can produce at most one agreement. |
+| `NegotiationMessage`    | Proposal chat and counter-term history.                         | Belongs to one proposal and one sender. Tracks attachments, optional counter-terms, and read state. Deleted with proposal.                                                                        |
+| `Agreement`             | Accepted proposal turned into a contract draft and later lease. | One-to-one with proposal via unique `proposalId`. Stores contract dates, JSON terms, JSON clauses, and lifecycle status.                                                                          |
+| `AgreementSignature`    | Signature record for an agreement signer.                       | Composite unique on `(agreementId, signerId)`. Stores signer role and signed timestamp. Deleted with agreement.                                                                                   |
+| `PaymentReceipt`        | Proof of payment uploaded for an agreement.                     | Belongs to one agreement and one uploader. Stores amount, date paid, file URL, optional notes, verification state, verifier, and rejection reason.                                                |
+| `AIRecommendation`      | Investor recommendation output.                                 | Stores criteria and ranked clusters payloads plus model version.                                                                                                                                  |
+| `AIPrediction`          | Cluster prediction output.                                      | Stores request features and predicted yield, cost, ROI, confidence, risk, and model version.                                                                                                      |
+| `Notification`          | In-app notification fanout target.                              | Belongs to one user. `isRead` and `readAt` model inbox state. `metadata` carries deep links and related ids.                                                                                      |
+| `AuditLog`              | Append-only audit trail of user and system actions.             | Records actor, action, target type/id, and freeform JSON details.                                                                                                                                 |
+| `EmailLog`              | Append-only email delivery log.                                 | Written by the mailer after each send attempt sequence. Tracks recipient, subject, status, attempts, timestamps, and failure text.                                                                |
 
 ## 4. Relationship map
 
@@ -124,9 +126,9 @@ Observed runtime flow:
 1. Registration creates a `user` row through Better Auth with `status = PENDING`.
 2. `/users/setup-profile` sets `role` and flips `status` to `ACTIVE`.
 3. The same endpoint creates the matching role profile record:
-	- `InvestorProfile` with empty `preferredRegions` and `preferredCrops`.
-	- `FarmerProfile` with default fields.
-	- `RepresentativeProfile` with empty `permissions`.
+    - `InvestorProfile` with empty `preferredRegions` and `preferredCrops`.
+    - `FarmerProfile` with default fields.
+    - `RepresentativeProfile` with empty `permissions`.
 
 Important invariant:
 
@@ -148,16 +150,16 @@ Practical effect:
 
 The proposal state machine is the most active mutable flow in the system.
 
-| From | To | Trigger | Guard / behavior | Side effects |
-| --- | --- | --- | --- | --- |
-| none | `DRAFT` | Investor creates a draft proposal | Draft creation requires a cluster and initializes safe defaults for optional fields. | Audit entry for draft creation. |
-| `DRAFT` | `SUBMITTED` | Investor submits the draft | Draft must have positive budget, positive duration, and at least one term entry. | Proposal submitted notification to the primary representative or first representative. |
-| `DRAFT` | `SUBMITTED` | Non-draft proposal create endpoint | Direct create path persists as submitted immediately. | Submission notification. |
-| `SUBMITTED` or `UNDER_NEGOTIATION` | `ACCEPTED` | Representative accepts | Only representatives can decide; terminal states are blocked. | Agreement is auto-generated as `DRAFT`, audit entry, acceptance notification. |
-| `SUBMITTED` or `UNDER_NEGOTIATION` | `REJECTED` | Representative rejects | Optional rejection reason. | Rejection notification and audit entry. |
-| `DRAFT` or `SUBMITTED` or `UNDER_NEGOTIATION` | `UNDER_NEGOTIATION` | Investor or representative posts a revision | Only open proposals can be revised. | Terms, budget, and duration are replaced; counterparty notification sent. |
-| `DRAFT` or `SUBMITTED` or `UNDER_NEGOTIATION` | `WITHDRAWN` | Investor withdraws | Only the investor may withdraw; terminal states are blocked. | Withdrawal notification to the representative side. |
-| `DRAFT` | deleted | Investor or admin hard-deletes draft | Hard delete is only allowed while still a draft. | No terminal notifications. |
+| From                                          | To                  | Trigger                                     | Guard / behavior                                                                     | Side effects                                                                           |
+| --------------------------------------------- | ------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| none                                          | `DRAFT`             | Investor creates a draft proposal           | Draft creation requires a cluster and initializes safe defaults for optional fields. | Audit entry for draft creation.                                                        |
+| `DRAFT`                                       | `SUBMITTED`         | Investor submits the draft                  | Draft must have positive budget, positive duration, and at least one term entry.     | Proposal submitted notification to the primary representative or first representative. |
+| `DRAFT`                                       | `SUBMITTED`         | Non-draft proposal create endpoint          | Direct create path persists as submitted immediately.                                | Submission notification.                                                               |
+| `SUBMITTED` or `UNDER_NEGOTIATION`            | `ACCEPTED`          | Representative accepts                      | Only representatives can decide; terminal states are blocked.                        | Agreement is auto-generated as `DRAFT`, audit entry, acceptance notification.          |
+| `SUBMITTED` or `UNDER_NEGOTIATION`            | `REJECTED`          | Representative rejects                      | Optional rejection reason.                                                           | Rejection notification and audit entry.                                                |
+| `DRAFT` or `SUBMITTED` or `UNDER_NEGOTIATION` | `UNDER_NEGOTIATION` | Investor or representative posts a revision | Only open proposals can be revised.                                                  | Terms, budget, and duration are replaced; counterparty notification sent.              |
+| `DRAFT` or `SUBMITTED` or `UNDER_NEGOTIATION` | `WITHDRAWN`         | Investor withdraws                          | Only the investor may withdraw; terminal states are blocked.                         | Withdrawal notification to the representative side.                                    |
+| `DRAFT`                                       | deleted             | Investor or admin hard-deletes draft        | Hard delete is only allowed while still a draft.                                     | No terminal notifications.                                                             |
 
 Proposal invariants:
 
@@ -170,16 +172,16 @@ Proposal invariants:
 
 Agreements are generated from accepted proposals and then move through signing, payment, activation, and eventual completion.
 
-| From | To | Trigger | Guard / behavior | Side effects |
-| --- | --- | --- | --- | --- |
-| none | `DRAFT` | `generateAgreementFromProposal` runs after proposal acceptance | One agreement per proposal; generation is idempotent. | Builds derived terms JSON and default clauses, audit entry, creation notification. |
-| `DRAFT` | `DRAFT` | One party signs | Agreement must be in `DRAFT` or `PENDING_SIGNATURES`, signer must be investor or representative, and duplicate signatures are blocked. | Signature row inserted, audit entry, realtime update. |
-| `DRAFT` | `PENDING_SIGNATURES` | Both investor and representative side have signed | The status name is legacy; the runtime uses it to mean the agreement is fully signed and awaiting payment verification. | Counterparty notification and realtime update. |
-| `PENDING_SIGNATURES` | `PENDING_SIGNATURES` | Additional allowed sign action by the second party when already partly signed | Signature set grows until both sides are present. | Same notification and realtime side effects. |
-| `DRAFT` or `PENDING_SIGNATURES` | `DRAFT` | Agreement terms are edited | Allowed only before activation; edit clears all signatures in one transaction. | Signatures deleted, status reset to `DRAFT`, edit notification, audit entry. |
-| any non-terminal state | `CANCELLED` | Investor, representative, or admin cancels | `COMPLETED` and `CANCELLED` agreements cannot be cancelled again. | Cancellation notification, audit entry, realtime update. |
-| `PENDING_SIGNATURES` | `ACTIVE` | Verified receipt is accepted | Verification must be done by representative or admin, and the receipt must still be `PENDING`. | Receipt becomes `VERIFIED`, verifier fields are set, payment verified notification, agreement activated notification, realtime update. |
-| `ACTIVE` | `COMPLETED` | `agreement-lifecycle.ts` job finds `endDate <= now` | Job only targets `ACTIVE` agreements and is idempotent. | Audit entry and completion notification. |
+| From                            | To                   | Trigger                                                                       | Guard / behavior                                                                                                                       | Side effects                                                                                                                           |
+| ------------------------------- | -------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| none                            | `DRAFT`              | `generateAgreementFromProposal` runs after proposal acceptance                | One agreement per proposal; generation is idempotent.                                                                                  | Builds derived terms JSON and default clauses, audit entry, creation notification.                                                     |
+| `DRAFT`                         | `DRAFT`              | One party signs                                                               | Agreement must be in `DRAFT` or `PENDING_SIGNATURES`, signer must be investor or representative, and duplicate signatures are blocked. | Signature row inserted, audit entry, realtime update.                                                                                  |
+| `DRAFT`                         | `PENDING_SIGNATURES` | Both investor and representative side have signed                             | The status name is legacy; the runtime uses it to mean the agreement is fully signed and awaiting payment verification.                | Counterparty notification and realtime update.                                                                                         |
+| `PENDING_SIGNATURES`            | `PENDING_SIGNATURES` | Additional allowed sign action by the second party when already partly signed | Signature set grows until both sides are present.                                                                                      | Same notification and realtime side effects.                                                                                           |
+| `DRAFT` or `PENDING_SIGNATURES` | `DRAFT`              | Agreement terms are edited                                                    | Allowed only before activation; edit clears all signatures in one transaction.                                                         | Signatures deleted, status reset to `DRAFT`, edit notification, audit entry.                                                           |
+| any non-terminal state          | `CANCELLED`          | Investor, representative, or admin cancels                                    | `COMPLETED` and `CANCELLED` agreements cannot be cancelled again.                                                                      | Cancellation notification, audit entry, realtime update.                                                                               |
+| `PENDING_SIGNATURES`            | `ACTIVE`             | Verified receipt is accepted                                                  | Verification must be done by representative or admin, and the receipt must still be `PENDING`.                                         | Receipt becomes `VERIFIED`, verifier fields are set, payment verified notification, agreement activated notification, realtime update. |
+| `ACTIVE`                        | `COMPLETED`          | `agreement-lifecycle.ts` job finds `endDate <= now`                           | Job only targets `ACTIVE` agreements and is idempotent.                                                                                | Audit entry and completion notification.                                                                                               |
 
 Agreement invariants:
 
@@ -197,11 +199,11 @@ Agreement invariants:
 
 ### 5.6 Payment receipt lifecycle
 
-| From | To | Trigger | Guard / behavior | Side effects |
-| --- | --- | --- | --- | --- |
-| none | `PENDING` | Investor uploads a receipt image | Agreement must exist and be exactly `PENDING_SIGNATURES`; only the investor on the agreement may upload. | Receipt created, audit entry, receipt-submitted notification to the representative side, realtime update. |
-| `PENDING` | `VERIFIED` | Representative or admin verifies receipt | Receipt must still be pending. | Verifier fields set, agreement set to `ACTIVE`, audit entry, payment verified notification, agreement activated notification, realtime update. |
-| `PENDING` | `REJECTED` | Representative or admin rejects receipt | Receipt must still be pending. | Verifier fields set, rejection reason stored, payment rejected notification, realtime update. |
+| From      | To         | Trigger                                  | Guard / behavior                                                                                         | Side effects                                                                                                                                   |
+| --------- | ---------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| none      | `PENDING`  | Investor uploads a receipt image         | Agreement must exist and be exactly `PENDING_SIGNATURES`; only the investor on the agreement may upload. | Receipt created, audit entry, receipt-submitted notification to the representative side, realtime update.                                      |
+| `PENDING` | `VERIFIED` | Representative or admin verifies receipt | Receipt must still be pending.                                                                           | Verifier fields set, agreement set to `ACTIVE`, audit entry, payment verified notification, agreement activated notification, realtime update. |
+| `PENDING` | `REJECTED` | Representative or admin rejects receipt  | Receipt must still be pending.                                                                           | Verifier fields set, rejection reason stored, payment rejected notification, realtime update.                                                  |
 
 Receipt invariants:
 
@@ -299,6 +301,7 @@ Audit entries store action-specific JSON, such as the state transition target, r
 - Both sides sign agreements, after which the investor uploads a receipt.
 - Verification activates the agreement, and the daily lifecycle job completes it at end date.
 - Notifications, audits, and email logs record the cross-cutting history of those actions.
+
 # FarmLease DB and Domain-State Specification
 
 Last updated: 2026-05-01
@@ -363,28 +366,28 @@ Better Auth owns the base authentication tables (`user`, `session`, `account`, `
 
 ## 3. Entity catalog
 
-| Model | Purpose | Key constraints and runtime notes |
-| --- | --- | --- |
-| `user` | Authenticated person and root identity for all app access. | `email` is unique. `role` defaults to `INVESTOR`. `status` defaults to `PENDING`. Deleting a user cascades sessions and accounts through Better Auth and cascades many FarmLease relations. |
-| `session` | Better Auth session record. | Unique `token`. Cascades on user delete. Used by `getRequestSession` and auth guards. |
-| `account` | Better Auth linked login provider record. | Stores provider credentials and tokens. Cascades on user delete. |
-| `verification` | Better Auth verification records. | Standalone auth verification table. |
-| `InvestorProfile` | Investor-specific profile data. | One-to-one with `user` via unique `userId`. Created in `/users/setup-profile` for `INVESTOR`. |
-| `FarmerProfile` | Farmer-specific profile data. | One-to-one with `user` via unique `userId`. Created in `/users/setup-profile` for `FARMER`. |
-| `RepresentativeProfile` | Representative-specific profile data. | One-to-one with `user` via unique `userId`. Created in `/users/setup-profile` for `REPRESENTATIVE`. |
-| `Cluster` | Cluster/land aggregate that proposals target. | Contains identity, location, geodata, coordinates, area, crop types, documents, and status. Has many farmers, representatives, proposals, and AI predictions. |
-| `ClusterFarmer` | Membership join table between a cluster and a farmer user. | Composite unique on `(clusterId, userId)`. Deletion cascades from both sides. |
-| `ClusterRepresentative` | Representative assignment join table. | Composite unique on `(clusterId, userId)`. `isPrimary` marks the preferred representative for notifications and UI fallbacks. |
-| `Proposal` | Negotiation record between an investor and a cluster. | Belongs to one cluster and one investor. Holds mutable JSON terms, budget, duration, dates, crop intent, documents, status, and rejection reason. One proposal can produce at most one agreement. |
-| `NegotiationMessage` | Proposal chat and counter-term history. | Belongs to one proposal and one sender. Tracks attachments, optional counter-terms, and read state. Deleted with proposal. |
-| `Agreement` | Accepted proposal turned into a contract draft and later lease. | One-to-one with proposal via unique `proposalId`. Stores contract dates, JSON terms, JSON clauses, and lifecycle status. |
-| `AgreementSignature` | Signature record for an agreement signer. | Composite unique on `(agreementId, signerId)`. Stores signer role and signed timestamp. Deleted with agreement. |
-| `PaymentReceipt` | Proof of payment uploaded for an agreement. | Belongs to one agreement and one uploader. Stores amount, date paid, file URL, optional notes, verification state, verifier, and rejection reason. |
-| `AIRecommendation` | Investor recommendation output. | Stores criteria and ranked clusters payloads plus model version. |
-| `AIPrediction` | Cluster prediction output. | Stores request features and predicted yield, cost, ROI, confidence, risk, and model version. |
-| `Notification` | In-app notification fanout target. | Belongs to one user. `isRead` and `readAt` model inbox state. `metadata` carries deep links and related ids. |
-| `AuditLog` | Append-only audit trail of user and system actions. | Records actor, action, target type/id, and freeform JSON details. |
-| `EmailLog` | Append-only email delivery log. | Written by the mailer after each send attempt sequence. Tracks recipient, subject, status, attempts, timestamps, and failure text. |
+| Model                   | Purpose                                                         | Key constraints and runtime notes                                                                                                                                                                 |
+| ----------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user`                  | Authenticated person and root identity for all app access.      | `email` is unique. `role` defaults to `INVESTOR`. `status` defaults to `PENDING`. Deleting a user cascades sessions and accounts through Better Auth and cascades many FarmLease relations.       |
+| `session`               | Better Auth session record.                                     | Unique `token`. Cascades on user delete. Used by `getRequestSession` and auth guards.                                                                                                             |
+| `account`               | Better Auth linked login provider record.                       | Stores provider credentials and tokens. Cascades on user delete.                                                                                                                                  |
+| `verification`          | Better Auth verification records.                               | Standalone auth verification table.                                                                                                                                                               |
+| `InvestorProfile`       | Investor-specific profile data.                                 | One-to-one with `user` via unique `userId`. Created in `/users/setup-profile` for `INVESTOR`.                                                                                                     |
+| `FarmerProfile`         | Farmer-specific profile data.                                   | One-to-one with `user` via unique `userId`. Created in `/users/setup-profile` for `FARMER`.                                                                                                       |
+| `RepresentativeProfile` | Representative-specific profile data.                           | One-to-one with `user` via unique `userId`. Created in `/users/setup-profile` for `REPRESENTATIVE`.                                                                                               |
+| `Cluster`               | Cluster/land aggregate that proposals target.                   | Contains identity, location, geodata, coordinates, area, crop types, documents, and status. Has many farmers, representatives, proposals, and AI predictions.                                     |
+| `ClusterFarmer`         | Membership join table between a cluster and a farmer user.      | Composite unique on `(clusterId, userId)`. Deletion cascades from both sides.                                                                                                                     |
+| `ClusterRepresentative` | Representative assignment join table.                           | Composite unique on `(clusterId, userId)`. `isPrimary` marks the preferred representative for notifications and UI fallbacks.                                                                     |
+| `Proposal`              | Negotiation record between an investor and a cluster.           | Belongs to one cluster and one investor. Holds mutable JSON terms, budget, duration, dates, crop intent, documents, status, and rejection reason. One proposal can produce at most one agreement. |
+| `NegotiationMessage`    | Proposal chat and counter-term history.                         | Belongs to one proposal and one sender. Tracks attachments, optional counter-terms, and read state. Deleted with proposal.                                                                        |
+| `Agreement`             | Accepted proposal turned into a contract draft and later lease. | One-to-one with proposal via unique `proposalId`. Stores contract dates, JSON terms, JSON clauses, and lifecycle status.                                                                          |
+| `AgreementSignature`    | Signature record for an agreement signer.                       | Composite unique on `(agreementId, signerId)`. Stores signer role and signed timestamp. Deleted with agreement.                                                                                   |
+| `PaymentReceipt`        | Proof of payment uploaded for an agreement.                     | Belongs to one agreement and one uploader. Stores amount, date paid, file URL, optional notes, verification state, verifier, and rejection reason.                                                |
+| `AIRecommendation`      | Investor recommendation output.                                 | Stores criteria and ranked clusters payloads plus model version.                                                                                                                                  |
+| `AIPrediction`          | Cluster prediction output.                                      | Stores request features and predicted yield, cost, ROI, confidence, risk, and model version.                                                                                                      |
+| `Notification`          | In-app notification fanout target.                              | Belongs to one user. `isRead` and `readAt` model inbox state. `metadata` carries deep links and related ids.                                                                                      |
+| `AuditLog`              | Append-only audit trail of user and system actions.             | Records actor, action, target type/id, and freeform JSON details.                                                                                                                                 |
+| `EmailLog`              | Append-only email delivery log.                                 | Written by the mailer after each send attempt sequence. Tracks recipient, subject, status, attempts, timestamps, and failure text.                                                                |
 
 ## 4. Relationship map
 
@@ -425,9 +428,9 @@ Observed runtime flow:
 1. Registration creates a `user` row through Better Auth with `status = PENDING`.
 2. `/users/setup-profile` sets `role` and flips `status` to `ACTIVE`.
 3. The same endpoint creates the matching role profile record:
-	- `InvestorProfile` with empty `preferredRegions` and `preferredCrops`.
-	- `FarmerProfile` with default fields.
-	- `RepresentativeProfile` with empty `permissions`.
+    - `InvestorProfile` with empty `preferredRegions` and `preferredCrops`.
+    - `FarmerProfile` with default fields.
+    - `RepresentativeProfile` with empty `permissions`.
 
 Important invariant:
 
@@ -449,16 +452,16 @@ Practical effect:
 
 The proposal state machine is the most active mutable flow in the system.
 
-| From | To | Trigger | Guard / behavior | Side effects |
-| --- | --- | --- | --- | --- |
-| none | `DRAFT` | Investor creates a draft proposal | Draft creation requires a cluster and initializes safe defaults for optional fields. | Audit entry for draft creation. |
-| `DRAFT` | `SUBMITTED` | Investor submits the draft | Draft must have positive budget, positive duration, and at least one term entry. | Proposal submitted notification to the primary representative or first representative. |
-| `DRAFT` | `SUBMITTED` | Non-draft proposal create endpoint | Direct create path persists as submitted immediately. | Submission notification. |
-| `SUBMITTED` or `UNDER_NEGOTIATION` | `ACCEPTED` | Representative accepts | Only representatives can decide; terminal states are blocked. | Agreement is auto-generated as `DRAFT`, audit entry, acceptance notification. |
-| `SUBMITTED` or `UNDER_NEGOTIATION` | `REJECTED` | Representative rejects | Optional rejection reason. | Rejection notification and audit entry. |
-| `DRAFT` or `SUBMITTED` or `UNDER_NEGOTIATION` | `UNDER_NEGOTIATION` | Investor or representative posts a revision | Only open proposals can be revised. | Terms, budget, and duration are replaced; counterparty notification sent. |
-| `DRAFT` or `SUBMITTED` or `UNDER_NEGOTIATION` | `WITHDRAWN` | Investor withdraws | Only the investor may withdraw; terminal states are blocked. | Withdrawal notification to the representative side. |
-| `DRAFT` | deleted | Investor or admin hard-deletes draft | Hard delete is only allowed while still a draft. | No terminal notifications. |
+| From                                          | To                  | Trigger                                     | Guard / behavior                                                                     | Side effects                                                                           |
+| --------------------------------------------- | ------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| none                                          | `DRAFT`             | Investor creates a draft proposal           | Draft creation requires a cluster and initializes safe defaults for optional fields. | Audit entry for draft creation.                                                        |
+| `DRAFT`                                       | `SUBMITTED`         | Investor submits the draft                  | Draft must have positive budget, positive duration, and at least one term entry.     | Proposal submitted notification to the primary representative or first representative. |
+| `DRAFT`                                       | `SUBMITTED`         | Non-draft proposal create endpoint          | Direct create path persists as submitted immediately.                                | Submission notification.                                                               |
+| `SUBMITTED` or `UNDER_NEGOTIATION`            | `ACCEPTED`          | Representative accepts                      | Only representatives can decide; terminal states are blocked.                        | Agreement is auto-generated as `DRAFT`, audit entry, acceptance notification.          |
+| `SUBMITTED` or `UNDER_NEGOTIATION`            | `REJECTED`          | Representative rejects                      | Optional rejection reason.                                                           | Rejection notification and audit entry.                                                |
+| `DRAFT` or `SUBMITTED` or `UNDER_NEGOTIATION` | `UNDER_NEGOTIATION` | Investor or representative posts a revision | Only open proposals can be revised.                                                  | Terms, budget, and duration are replaced; counterparty notification sent.              |
+| `DRAFT` or `SUBMITTED` or `UNDER_NEGOTIATION` | `WITHDRAWN`         | Investor withdraws                          | Only the investor may withdraw; terminal states are blocked.                         | Withdrawal notification to the representative side.                                    |
+| `DRAFT`                                       | deleted             | Investor or admin hard-deletes draft        | Hard delete is only allowed while still a draft.                                     | No terminal notifications.                                                             |
 
 Proposal invariants:
 
@@ -471,16 +474,16 @@ Proposal invariants:
 
 Agreements are generated from accepted proposals and then move through signing, payment, activation, and eventual completion.
 
-| From | To | Trigger | Guard / behavior | Side effects |
-| --- | --- | --- | --- | --- |
-| none | `DRAFT` | `generateAgreementFromProposal` runs after proposal acceptance | One agreement per proposal; generation is idempotent. | Builds derived terms JSON and default clauses, audit entry, creation notification. |
-| `DRAFT` | `DRAFT` | One party signs | Agreement must be in `DRAFT` or `PENDING_SIGNATURES`, signer must be investor or representative, and duplicate signatures are blocked. | Signature row inserted, audit entry, realtime update. |
-| `DRAFT` | `PENDING_SIGNATURES` | Both investor and representative side have signed | The status name is legacy; the runtime uses it to mean the agreement is fully signed and awaiting payment verification. | Counterparty notification and realtime update. |
-| `PENDING_SIGNATURES` | `PENDING_SIGNATURES` | Additional allowed sign action by the second party when already partly signed | Signature set grows until both sides are present. | Same notification and realtime side effects. |
-| `DRAFT` or `PENDING_SIGNATURES` | `DRAFT` | Agreement terms are edited | Allowed only before activation; edit clears all signatures in one transaction. | Signatures deleted, status reset to `DRAFT`, edit notification, audit entry. |
-| any non-terminal state | `CANCELLED` | Investor, representative, or admin cancels | `COMPLETED` and `CANCELLED` agreements cannot be cancelled again. | Cancellation notification, audit entry, realtime update. |
-| `PENDING_SIGNATURES` | `ACTIVE` | Verified receipt is accepted | Verification must be done by representative or admin, and the receipt must still be `PENDING`. | Receipt becomes `VERIFIED`, verifier fields are set, payment verified notification, agreement activated notification, realtime update. |
-| `ACTIVE` | `COMPLETED` | `agreement-lifecycle.ts` job finds `endDate <= now` | Job only targets `ACTIVE` agreements and is idempotent. | Audit entry and completion notification. |
+| From                            | To                   | Trigger                                                                       | Guard / behavior                                                                                                                       | Side effects                                                                                                                           |
+| ------------------------------- | -------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| none                            | `DRAFT`              | `generateAgreementFromProposal` runs after proposal acceptance                | One agreement per proposal; generation is idempotent.                                                                                  | Builds derived terms JSON and default clauses, audit entry, creation notification.                                                     |
+| `DRAFT`                         | `DRAFT`              | One party signs                                                               | Agreement must be in `DRAFT` or `PENDING_SIGNATURES`, signer must be investor or representative, and duplicate signatures are blocked. | Signature row inserted, audit entry, realtime update.                                                                                  |
+| `DRAFT`                         | `PENDING_SIGNATURES` | Both investor and representative side have signed                             | The status name is legacy; the runtime uses it to mean the agreement is fully signed and awaiting payment verification.                | Counterparty notification and realtime update.                                                                                         |
+| `PENDING_SIGNATURES`            | `PENDING_SIGNATURES` | Additional allowed sign action by the second party when already partly signed | Signature set grows until both sides are present.                                                                                      | Same notification and realtime side effects.                                                                                           |
+| `DRAFT` or `PENDING_SIGNATURES` | `DRAFT`              | Agreement terms are edited                                                    | Allowed only before activation; edit clears all signatures in one transaction.                                                         | Signatures deleted, status reset to `DRAFT`, edit notification, audit entry.                                                           |
+| any non-terminal state          | `CANCELLED`          | Investor, representative, or admin cancels                                    | `COMPLETED` and `CANCELLED` agreements cannot be cancelled again.                                                                      | Cancellation notification, audit entry, realtime update.                                                                               |
+| `PENDING_SIGNATURES`            | `ACTIVE`             | Verified receipt is accepted                                                  | Verification must be done by representative or admin, and the receipt must still be `PENDING`.                                         | Receipt becomes `VERIFIED`, verifier fields are set, payment verified notification, agreement activated notification, realtime update. |
+| `ACTIVE`                        | `COMPLETED`          | `agreement-lifecycle.ts` job finds `endDate <= now`                           | Job only targets `ACTIVE` agreements and is idempotent.                                                                                | Audit entry and completion notification.                                                                                               |
 
 Agreement invariants:
 
@@ -498,11 +501,11 @@ Agreement invariants:
 
 ### 5.6 Payment receipt lifecycle
 
-| From | To | Trigger | Guard / behavior | Side effects |
-| --- | --- | --- | --- | --- |
-| none | `PENDING` | Investor uploads a receipt image | Agreement must exist and be exactly `PENDING_SIGNATURES`; only the investor on the agreement may upload. | Receipt created, audit entry, receipt-submitted notification to the representative side, realtime update. |
-| `PENDING` | `VERIFIED` | Representative or admin verifies receipt | Receipt must still be pending. | Verifier fields set, agreement set to `ACTIVE`, audit entry, payment verified notification, agreement activated notification, realtime update. |
-| `PENDING` | `REJECTED` | Representative or admin rejects receipt | Receipt must still be pending. | Verifier fields set, rejection reason stored, payment rejected notification, realtime update. |
+| From      | To         | Trigger                                  | Guard / behavior                                                                                         | Side effects                                                                                                                                   |
+| --------- | ---------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| none      | `PENDING`  | Investor uploads a receipt image         | Agreement must exist and be exactly `PENDING_SIGNATURES`; only the investor on the agreement may upload. | Receipt created, audit entry, receipt-submitted notification to the representative side, realtime update.                                      |
+| `PENDING` | `VERIFIED` | Representative or admin verifies receipt | Receipt must still be pending.                                                                           | Verifier fields set, agreement set to `ACTIVE`, audit entry, payment verified notification, agreement activated notification, realtime update. |
+| `PENDING` | `REJECTED` | Representative or admin rejects receipt  | Receipt must still be pending.                                                                           | Verifier fields set, rejection reason stored, payment rejected notification, realtime update.                                                  |
 
 Receipt invariants:
 

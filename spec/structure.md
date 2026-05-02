@@ -1,6 +1,8 @@
 # FarmLease Codebase Structure Specification
 
-Last updated: 2026-05-01
+Last updated: 2026-05-02
+
+Recent changes: the DB schema now includes an `EmailLog` model and an accompanying migration at `packages/db/prisma/migrations/20260501101355_add_email_logs/`. The server mailer at `apps/server/src/modules/notifications/mailer.ts` persists rows to this table after delivery attempts.
 
 ## 1) Purpose of this document
 

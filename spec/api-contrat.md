@@ -1,6 +1,8 @@
 # FarmLease API Contract
 
-Last updated: 2026-05-01
+Last updated: 2026-05-02
+
+Recent changes (2026-05-01/02): Added an internal `EmailLog` model and mailer persistence. The DB migration `packages/db/prisma/migrations/20260501101355_add_email_logs/` is present and the mailer writes `EmailLog` rows; there is no public `/api/email-logs` endpoint.
 
 This document specifies the HTTP contract currently exposed by the codebase. It is derived from the live Express routes in `apps/server` and the Next.js auth proxy in `apps/web`.
 
@@ -140,34 +142,38 @@ Response:
 
 ```json
 {
-	"clusters": [
-		{
-			"id": "uuid",
-			"name": "Cluster name",
-			"description": "Optional description",
-			"location": "Location",
-			"region": "Region",
-			"geodata": {},
-			"coordinates": {},
-			"totalArea": "123.45",
-			"cropTypes": ["Maize"],
-			"status": "VERIFIED",
-			"documents": [],
-			"registeredAt": "2026-05-01T00:00:00.000Z",
-			"updatedAt": "2026-05-01T00:00:00.000Z",
-			"representatives": [
-				{
-					"id": "uuid",
-					"userId": "uuid",
-					"clusterId": "uuid",
-					"isPrimary": true,
-					"assignedAt": "2026-05-01T00:00:00.000Z",
-					"user": { "id": "uuid", "name": "Rep Name", "email": "rep@example.com" }
-				}
-			],
-			"_count": { "farmers": 10, "proposals": 3 }
-		}
-	]
+    "clusters": [
+        {
+            "id": "uuid",
+            "name": "Cluster name",
+            "description": "Optional description",
+            "location": "Location",
+            "region": "Region",
+            "geodata": {},
+            "coordinates": {},
+            "totalArea": "123.45",
+            "cropTypes": ["Maize"],
+            "status": "VERIFIED",
+            "documents": [],
+            "registeredAt": "2026-05-01T00:00:00.000Z",
+            "updatedAt": "2026-05-01T00:00:00.000Z",
+            "representatives": [
+                {
+                    "id": "uuid",
+                    "userId": "uuid",
+                    "clusterId": "uuid",
+                    "isPrimary": true,
+                    "assignedAt": "2026-05-01T00:00:00.000Z",
+                    "user": {
+                        "id": "uuid",
+                        "name": "Rep Name",
+                        "email": "rep@example.com"
+                    }
+                }
+            ],
+            "_count": { "farmers": 10, "proposals": 3 }
+        }
+    ]
 }
 ```
 
@@ -193,42 +199,50 @@ Response:
 
 ```json
 {
-	"cluster": {
-		"id": "uuid",
-		"name": "Cluster name",
-		"description": "Optional description",
-		"location": "Location",
-		"region": "Region",
-		"geodata": {},
-		"coordinates": {},
-		"totalArea": "123.45",
-		"cropTypes": [],
-		"status": "VERIFIED",
-		"documents": [],
-		"registeredAt": "2026-05-01T00:00:00.000Z",
-		"updatedAt": "2026-05-01T00:00:00.000Z",
-		"representatives": [
-			{
-				"id": "uuid",
-				"userId": "uuid",
-				"clusterId": "uuid",
-				"isPrimary": true,
-				"assignedAt": "2026-05-01T00:00:00.000Z",
-				"user": { "id": "uuid", "name": "Rep Name", "email": "rep@example.com" }
-			}
-		],
-		"farmers": [
-			{
-				"id": "uuid",
-				"clusterId": "uuid",
-				"userId": "uuid",
-				"joinedAt": "2026-05-01T00:00:00.000Z",
-				"landShare": "1.50",
-				"user": { "id": "uuid", "name": "Farmer Name", "role": "FARMER" }
-			}
-		],
-		"_count": { "proposals": 3 }
-	}
+    "cluster": {
+        "id": "uuid",
+        "name": "Cluster name",
+        "description": "Optional description",
+        "location": "Location",
+        "region": "Region",
+        "geodata": {},
+        "coordinates": {},
+        "totalArea": "123.45",
+        "cropTypes": [],
+        "status": "VERIFIED",
+        "documents": [],
+        "registeredAt": "2026-05-01T00:00:00.000Z",
+        "updatedAt": "2026-05-01T00:00:00.000Z",
+        "representatives": [
+            {
+                "id": "uuid",
+                "userId": "uuid",
+                "clusterId": "uuid",
+                "isPrimary": true,
+                "assignedAt": "2026-05-01T00:00:00.000Z",
+                "user": {
+                    "id": "uuid",
+                    "name": "Rep Name",
+                    "email": "rep@example.com"
+                }
+            }
+        ],
+        "farmers": [
+            {
+                "id": "uuid",
+                "clusterId": "uuid",
+                "userId": "uuid",
+                "joinedAt": "2026-05-01T00:00:00.000Z",
+                "landShare": "1.50",
+                "user": {
+                    "id": "uuid",
+                    "name": "Farmer Name",
+                    "role": "FARMER"
+                }
+            }
+        ],
+        "_count": { "proposals": 3 }
+    }
 }
 ```
 
@@ -268,9 +282,9 @@ Side effects:
 - Updates `user.role`.
 - Marks `user.status` as `ACTIVE`.
 - Upserts the matching role profile:
-	- `InvestorProfile`
-	- `FarmerProfile`
-	- `RepresentativeProfile`
+    - `InvestorProfile`
+    - `FarmerProfile`
+    - `RepresentativeProfile`
 
 Errors:
 
@@ -285,18 +299,18 @@ Response:
 
 ```json
 {
-	"user": {
-		"id": "uuid",
-		"name": "User Name",
-		"email": "user@example.com",
-		"role": "INVESTOR",
-		"status": "ACTIVE",
-		"image": null,
-		"createdAt": "2026-05-01T00:00:00.000Z",
-		"investorProfile": {},
-		"farmerProfile": null,
-		"representativeProfile": null
-	}
+    "user": {
+        "id": "uuid",
+        "name": "User Name",
+        "email": "user@example.com",
+        "role": "INVESTOR",
+        "status": "ACTIVE",
+        "image": null,
+        "createdAt": "2026-05-01T00:00:00.000Z",
+        "investorProfile": {},
+        "farmerProfile": null,
+        "representativeProfile": null
+    }
 }
 ```
 
@@ -317,20 +331,20 @@ Proposal list and mutation responses return proposal rows with this general shap
 
 ```json
 {
-	"proposal": {
-		"id": "uuid",
-		"status": "DRAFT",
-		"budget": "50000.00",
-		"durationMonths": 12,
-		"startDate": "2026-05-01T00:00:00.000Z",
-		"cropIntended": "Maize",
-		"documents": [],
-		"terms": {},
-		"createdAt": "2026-05-01T00:00:00.000Z",
-		"updatedAt": "2026-05-01T00:00:00.000Z",
-		"cluster": { "id": "uuid", "name": "Cluster name", "region": "Region" },
-		"investor": { "id": "uuid", "name": "Investor Name" }
-	}
+    "proposal": {
+        "id": "uuid",
+        "status": "DRAFT",
+        "budget": "50000.00",
+        "durationMonths": 12,
+        "startDate": "2026-05-01T00:00:00.000Z",
+        "cropIntended": "Maize",
+        "documents": [],
+        "terms": {},
+        "createdAt": "2026-05-01T00:00:00.000Z",
+        "updatedAt": "2026-05-01T00:00:00.000Z",
+        "cluster": { "id": "uuid", "name": "Cluster name", "region": "Region" },
+        "investor": { "id": "uuid", "name": "Investor Name" }
+    }
 }
 ```
 
@@ -344,13 +358,13 @@ Body:
 
 ```json
 {
-	"clusterId": "uuid",
-	"budget": 0,
-	"durationMonths": 0,
-	"startDate": null,
-	"cropIntended": null,
-	"terms": {},
-	"documents": []
+    "clusterId": "uuid",
+    "budget": 0,
+    "durationMonths": 0,
+    "startDate": null,
+    "cropIntended": null,
+    "terms": {},
+    "documents": []
 }
 ```
 
@@ -382,13 +396,13 @@ Body:
 
 ```json
 {
-	"clusterId": "uuid",
-	"budget": 1000,
-	"durationMonths": 12,
-	"startDate": null,
-	"cropIntended": "Maize",
-	"terms": {},
-	"documents": []
+    "clusterId": "uuid",
+    "budget": 1000,
+    "durationMonths": 12,
+    "startDate": null,
+    "cropIntended": "Maize",
+    "terms": {},
+    "documents": []
 }
 ```
 
@@ -442,13 +456,13 @@ Body:
 
 ```json
 {
-	"clusterId": "uuid",
-	"budget": 50000,
-	"durationMonths": 12,
-	"startDate": "2026-05-01T00:00:00.000Z",
-	"cropIntended": "Maize",
-	"terms": {},
-	"documents": []
+    "clusterId": "uuid",
+    "budget": 50000,
+    "durationMonths": 12,
+    "startDate": "2026-05-01T00:00:00.000Z",
+    "cropIntended": "Maize",
+    "terms": {},
+    "documents": []
 }
 ```
 
@@ -501,22 +515,22 @@ Response:
 
 ```json
 {
-	"proposals": [
-		{
-			"id": "uuid",
-			"status": "SUBMITTED",
-			"budget": "50000.00",
-			"durationMonths": 12,
-			"startDate": null,
-			"cropIntended": "Maize",
-			"documents": [],
-			"terms": {},
-			"createdAt": "2026-05-01T00:00:00.000Z",
-			"updatedAt": "2026-05-01T00:00:00.000Z",
-			"cluster": { "id": "uuid", "name": "Cluster name" },
-			"investor": { "id": "uuid", "name": "Investor Name" }
-		}
-	]
+    "proposals": [
+        {
+            "id": "uuid",
+            "status": "SUBMITTED",
+            "budget": "50000.00",
+            "durationMonths": 12,
+            "startDate": null,
+            "cropIntended": "Maize",
+            "documents": [],
+            "terms": {},
+            "createdAt": "2026-05-01T00:00:00.000Z",
+            "updatedAt": "2026-05-01T00:00:00.000Z",
+            "cluster": { "id": "uuid", "name": "Cluster name" },
+            "investor": { "id": "uuid", "name": "Investor Name" }
+        }
+    ]
 }
 ```
 
@@ -535,33 +549,35 @@ Response:
 
 ```json
 {
-	"proposal": {
-		"id": "uuid",
-		"status": "UNDER_NEGOTIATION",
-		"budget": "50000.00",
-		"durationMonths": 12,
-		"startDate": null,
-		"cropIntended": "Maize",
-		"documents": [],
-		"terms": {},
-		"createdAt": "2026-05-01T00:00:00.000Z",
-		"updatedAt": "2026-05-01T00:00:00.000Z",
-		"cluster": {
-			"id": "uuid",
-			"name": "Cluster name",
-			"region": "Region",
-			"representatives": [
-				{ "userId": "uuid", "isPrimary": true }
-			]
-		},
-		"investor": { "id": "uuid", "name": "Investor Name", "email": "investor@example.com" },
-		"messages": []
-	},
-	"viewer": {
-		"id": "uuid",
-		"isInvestor": true,
-		"isRepresentative": false
-	}
+    "proposal": {
+        "id": "uuid",
+        "status": "UNDER_NEGOTIATION",
+        "budget": "50000.00",
+        "durationMonths": 12,
+        "startDate": null,
+        "cropIntended": "Maize",
+        "documents": [],
+        "terms": {},
+        "createdAt": "2026-05-01T00:00:00.000Z",
+        "updatedAt": "2026-05-01T00:00:00.000Z",
+        "cluster": {
+            "id": "uuid",
+            "name": "Cluster name",
+            "region": "Region",
+            "representatives": [{ "userId": "uuid", "isPrimary": true }]
+        },
+        "investor": {
+            "id": "uuid",
+            "name": "Investor Name",
+            "email": "investor@example.com"
+        },
+        "messages": []
+    },
+    "viewer": {
+        "id": "uuid",
+        "isInvestor": true,
+        "isRepresentative": false
+    }
 }
 ```
 
@@ -585,9 +601,9 @@ Validation:
 - Caller must own the draft unless caller is `ADMIN`.
 - Draft must currently be `DRAFT`.
 - Draft must be complete enough to submit:
-	- budget > 0
-	- durationMonths > 0
-	- terms object must not be empty
+    - budget > 0
+    - durationMonths > 0
+    - terms object must not be empty
 
 Response:
 
@@ -674,10 +690,10 @@ Body:
 
 ```json
 {
-	"budget": 60000,
-	"durationMonths": 14,
-	"terms": {},
-	"note": "Optional note"
+    "budget": 60000,
+    "durationMonths": 14,
+    "terms": {},
+    "note": "Optional note"
 }
 ```
 
@@ -732,20 +748,20 @@ Response:
 
 ```json
 {
-	"messages": [
-		{
-			"id": "uuid",
-			"proposalId": "uuid",
-			"senderId": "uuid",
-			"message": "Hello",
-			"attachments": [],
-			"counterTerms": {},
-			"isRead": false,
-			"createdAt": "2026-05-01T00:00:00.000Z",
-			"sender": { "id": "uuid", "name": "Sender Name" }
-		}
-	],
-	"hasMore": true
+    "messages": [
+        {
+            "id": "uuid",
+            "proposalId": "uuid",
+            "senderId": "uuid",
+            "message": "Hello",
+            "attachments": [],
+            "counterTerms": {},
+            "isRead": false,
+            "createdAt": "2026-05-01T00:00:00.000Z",
+            "sender": { "id": "uuid", "name": "Sender Name" }
+        }
+    ],
+    "hasMore": true
 }
 ```
 
@@ -766,9 +782,9 @@ Body:
 
 ```json
 {
-	"message": "Counter offer text",
-	"counterTerms": {},
-	"attachments": ["https://example.com/doc.pdf"]
+    "message": "Counter offer text",
+    "counterTerms": {},
+    "attachments": ["https://example.com/doc.pdf"]
 }
 ```
 
@@ -786,17 +802,17 @@ Response:
 
 ```json
 {
-	"message": {
-		"id": "uuid",
-		"proposalId": "uuid",
-		"senderId": "uuid",
-		"message": "Counter offer text",
-		"attachments": [],
-		"counterTerms": {},
-		"isRead": false,
-		"createdAt": "2026-05-01T00:00:00.000Z",
-		"sender": { "id": "uuid", "name": "Sender Name" }
-	}
+    "message": {
+        "id": "uuid",
+        "proposalId": "uuid",
+        "senderId": "uuid",
+        "message": "Counter offer text",
+        "attachments": [],
+        "counterTerms": {},
+        "isRead": false,
+        "createdAt": "2026-05-01T00:00:00.000Z",
+        "sender": { "id": "uuid", "name": "Sender Name" }
+    }
 }
 ```
 
@@ -851,25 +867,33 @@ List responses return agreement records with proposal summary and signature coun
 
 ```json
 {
-	"agreement": {
-		"id": "uuid",
-		"proposalId": "uuid",
-		"status": "DRAFT",
-		"startDate": "2026-05-01T00:00:00.000Z",
-		"endDate": "2027-05-01T00:00:00.000Z",
-		"createdAt": "2026-05-01T00:00:00.000Z",
-		"updatedAt": "2026-05-01T00:00:00.000Z",
-		"proposal": {
-			"id": "uuid",
-			"budget": "50000.00",
-			"durationMonths": 12,
-			"cluster": { "id": "uuid", "name": "Cluster name", "region": "Region" },
-			"investor": { "id": "uuid", "name": "Investor Name" }
-		},
-		"signatures": [
-			{ "signerId": "uuid", "role": "INVESTOR", "signedAt": "2026-05-01T00:00:00.000Z" }
-		]
-	}
+    "agreement": {
+        "id": "uuid",
+        "proposalId": "uuid",
+        "status": "DRAFT",
+        "startDate": "2026-05-01T00:00:00.000Z",
+        "endDate": "2027-05-01T00:00:00.000Z",
+        "createdAt": "2026-05-01T00:00:00.000Z",
+        "updatedAt": "2026-05-01T00:00:00.000Z",
+        "proposal": {
+            "id": "uuid",
+            "budget": "50000.00",
+            "durationMonths": 12,
+            "cluster": {
+                "id": "uuid",
+                "name": "Cluster name",
+                "region": "Region"
+            },
+            "investor": { "id": "uuid", "name": "Investor Name" }
+        },
+        "signatures": [
+            {
+                "signerId": "uuid",
+                "role": "INVESTOR",
+                "signedAt": "2026-05-01T00:00:00.000Z"
+            }
+        ]
+    }
 }
 ```
 
@@ -892,28 +916,36 @@ Response:
 
 ```json
 {
-	"agreements": [
-		{
-			"id": "uuid",
-			"proposalId": "uuid",
-			"status": "PENDING_SIGNATURES",
-			"startDate": "2026-05-01T00:00:00.000Z",
-			"endDate": "2027-05-01T00:00:00.000Z",
-			"createdAt": "2026-05-01T00:00:00.000Z",
-			"updatedAt": "2026-05-01T00:00:00.000Z",
-			"proposal": {
-				"id": "uuid",
-				"budget": "50000.00",
-				"durationMonths": 12,
-				"cluster": { "id": "uuid", "name": "Cluster name", "region": "Region" },
-				"investor": { "id": "uuid", "name": "Investor Name" }
-			},
-			"signatures": [
-				{ "signerId": "uuid", "role": "INVESTOR", "signedAt": "2026-05-01T00:00:00.000Z" }
-			],
-			"_count": { "receipts": 0 }
-		}
-	]
+    "agreements": [
+        {
+            "id": "uuid",
+            "proposalId": "uuid",
+            "status": "PENDING_SIGNATURES",
+            "startDate": "2026-05-01T00:00:00.000Z",
+            "endDate": "2027-05-01T00:00:00.000Z",
+            "createdAt": "2026-05-01T00:00:00.000Z",
+            "updatedAt": "2026-05-01T00:00:00.000Z",
+            "proposal": {
+                "id": "uuid",
+                "budget": "50000.00",
+                "durationMonths": 12,
+                "cluster": {
+                    "id": "uuid",
+                    "name": "Cluster name",
+                    "region": "Region"
+                },
+                "investor": { "id": "uuid", "name": "Investor Name" }
+            },
+            "signatures": [
+                {
+                    "signerId": "uuid",
+                    "role": "INVESTOR",
+                    "signedAt": "2026-05-01T00:00:00.000Z"
+                }
+            ],
+            "_count": { "receipts": 0 }
+        }
+    ]
 }
 ```
 
@@ -932,59 +964,65 @@ Response:
 
 ```json
 {
-	"agreement": {
-		"id": "uuid",
-		"proposalId": "uuid",
-		"status": "DRAFT",
-		"startDate": "2026-05-01T00:00:00.000Z",
-		"endDate": "2027-05-01T00:00:00.000Z",
-		"terms": {},
-		"clauses": [],
-		"createdAt": "2026-05-01T00:00:00.000Z",
-		"updatedAt": "2026-05-01T00:00:00.000Z",
-		"proposal": {
-			"id": "uuid",
-			"status": "ACCEPTED",
-			"cluster": {
-				"id": "uuid",
-				"name": "Cluster name",
-				"representatives": [
-					{ "userId": "uuid", "isPrimary": true }
-				]
-			},
-			"investor": { "id": "uuid", "name": "Investor Name", "email": "investor@example.com" },
-			"messages": []
-		},
-		"signatures": [
-			{
-				"id": "uuid",
-				"agreementId": "uuid",
-				"signerId": "uuid",
-				"role": "INVESTOR",
-				"signedAt": "2026-05-01T00:00:00.000Z",
-				"signer": { "id": "uuid", "name": "Signer Name", "role": "INVESTOR" }
-			}
-		]
-	},
-	"receipts": [
-		{
-			"id": "uuid",
-			"agreementId": "uuid",
-			"uploaderId": "uuid",
-			"amount": "50000.00",
-			"datePaid": "2026-05-01T00:00:00.000Z",
-			"imageUrl": "http://localhost:3000/uploads/receipts/file.pdf",
-			"notes": null,
-			"verificationStatus": "PENDING",
-			"verifiedById": null,
-			"verifiedAt": null,
-			"rejectionReason": null,
-			"createdAt": "2026-05-01T00:00:00.000Z",
-			"updatedAt": "2026-05-01T00:00:00.000Z",
-			"uploader": { "id": "uuid", "name": "Uploader Name" },
-			"verifiedBy": null
-		}
-	]
+    "agreement": {
+        "id": "uuid",
+        "proposalId": "uuid",
+        "status": "DRAFT",
+        "startDate": "2026-05-01T00:00:00.000Z",
+        "endDate": "2027-05-01T00:00:00.000Z",
+        "terms": {},
+        "clauses": [],
+        "createdAt": "2026-05-01T00:00:00.000Z",
+        "updatedAt": "2026-05-01T00:00:00.000Z",
+        "proposal": {
+            "id": "uuid",
+            "status": "ACCEPTED",
+            "cluster": {
+                "id": "uuid",
+                "name": "Cluster name",
+                "representatives": [{ "userId": "uuid", "isPrimary": true }]
+            },
+            "investor": {
+                "id": "uuid",
+                "name": "Investor Name",
+                "email": "investor@example.com"
+            },
+            "messages": []
+        },
+        "signatures": [
+            {
+                "id": "uuid",
+                "agreementId": "uuid",
+                "signerId": "uuid",
+                "role": "INVESTOR",
+                "signedAt": "2026-05-01T00:00:00.000Z",
+                "signer": {
+                    "id": "uuid",
+                    "name": "Signer Name",
+                    "role": "INVESTOR"
+                }
+            }
+        ]
+    },
+    "receipts": [
+        {
+            "id": "uuid",
+            "agreementId": "uuid",
+            "uploaderId": "uuid",
+            "amount": "50000.00",
+            "datePaid": "2026-05-01T00:00:00.000Z",
+            "imageUrl": "http://localhost:3000/uploads/receipts/file.pdf",
+            "notes": null,
+            "verificationStatus": "PENDING",
+            "verifiedById": null,
+            "verifiedAt": null,
+            "rejectionReason": null,
+            "createdAt": "2026-05-01T00:00:00.000Z",
+            "updatedAt": "2026-05-01T00:00:00.000Z",
+            "uploader": { "id": "uuid", "name": "Uploader Name" },
+            "verifiedBy": null
+        }
+    ]
 }
 ```
 
@@ -1010,17 +1048,17 @@ Response:
 
 ```json
 {
-	"signature": {
-		"id": "uuid",
-		"agreementId": "uuid",
-		"signerId": "uuid",
-		"role": "INVESTOR",
-		"signedAt": "2026-05-01T00:00:00.000Z"
-	},
-	"agreement": {
-		"id": "uuid",
-		"status": "PENDING_SIGNATURES"
-	}
+    "signature": {
+        "id": "uuid",
+        "agreementId": "uuid",
+        "signerId": "uuid",
+        "role": "INVESTOR",
+        "signedAt": "2026-05-01T00:00:00.000Z"
+    },
+    "agreement": {
+        "id": "uuid",
+        "status": "PENDING_SIGNATURES"
+    }
 }
 ```
 
@@ -1076,11 +1114,9 @@ Body:
 
 ```json
 {
-	"terms": {},
-	"clauses": [
-		{ "title": "1. Parties", "body": "Clause text" }
-	],
-	"note": "Optional note"
+    "terms": {},
+    "clauses": [{ "title": "1. Parties", "body": "Clause text" }],
+    "note": "Optional note"
 }
 ```
 
@@ -1120,23 +1156,23 @@ File owner: `apps/server/src/modules/receipts/routes.ts`
 
 ```json
 {
-	"receipt": {
-		"id": "uuid",
-		"agreementId": "uuid",
-		"uploaderId": "uuid",
-		"amount": "50000.00",
-		"datePaid": "2026-05-01T00:00:00.000Z",
-		"imageUrl": "http://localhost:3000/uploads/receipts/file.png",
-		"notes": "Optional notes",
-		"verificationStatus": "PENDING",
-		"verifiedById": null,
-		"verifiedAt": null,
-		"rejectionReason": null,
-		"createdAt": "2026-05-01T00:00:00.000Z",
-		"updatedAt": "2026-05-01T00:00:00.000Z",
-		"uploader": { "id": "uuid", "name": "Uploader Name" },
-		"verifiedBy": null
-	}
+    "receipt": {
+        "id": "uuid",
+        "agreementId": "uuid",
+        "uploaderId": "uuid",
+        "amount": "50000.00",
+        "datePaid": "2026-05-01T00:00:00.000Z",
+        "imageUrl": "http://localhost:3000/uploads/receipts/file.png",
+        "notes": "Optional notes",
+        "verificationStatus": "PENDING",
+        "verifiedById": null,
+        "verifiedAt": null,
+        "rejectionReason": null,
+        "createdAt": "2026-05-01T00:00:00.000Z",
+        "updatedAt": "2026-05-01T00:00:00.000Z",
+        "uploader": { "id": "uuid", "name": "Uploader Name" },
+        "verifiedBy": null
+    }
 }
 ```
 
@@ -1249,15 +1285,15 @@ The database shape returned by the API includes the model fields. The web client
 
 ```json
 {
-	"id": "uuid",
-	"userId": "uuid",
-	"type": "PROPOSAL_SUBMITTED",
-	"title": "New proposal submitted",
-	"message": "Text body",
-	"isRead": false,
-	"readAt": null,
-	"metadata": {},
-	"createdAt": "2026-05-01T00:00:00.000Z"
+    "id": "uuid",
+    "userId": "uuid",
+    "type": "PROPOSAL_SUBMITTED",
+    "title": "New proposal submitted",
+    "message": "Text body",
+    "isRead": false,
+    "readAt": null,
+    "metadata": {},
+    "createdAt": "2026-05-01T00:00:00.000Z"
 }
 ```
 
@@ -1271,20 +1307,20 @@ Response:
 
 ```json
 {
-	"notifications": [
-		{
-			"id": "uuid",
-			"userId": "uuid",
-			"type": "PROPOSAL_SUBMITTED",
-			"title": "New proposal submitted",
-			"message": "An investor submitted a proposal.",
-			"isRead": false,
-			"readAt": null,
-			"metadata": { "proposalId": "uuid", "url": "/proposals/uuid" },
-			"createdAt": "2026-05-01T00:00:00.000Z"
-		}
-	],
-	"unreadCount": 2
+    "notifications": [
+        {
+            "id": "uuid",
+            "userId": "uuid",
+            "type": "PROPOSAL_SUBMITTED",
+            "title": "New proposal submitted",
+            "message": "An investor submitted a proposal.",
+            "isRead": false,
+            "readAt": null,
+            "metadata": { "proposalId": "uuid", "url": "/proposals/uuid" },
+            "createdAt": "2026-05-01T00:00:00.000Z"
+        }
+    ],
+    "unreadCount": 2
 }
 ```
 
@@ -1302,15 +1338,15 @@ Response:
 
 ```json
 {
-	"id": "uuid",
-	"userId": "uuid",
-	"type": "PROPOSAL_SUBMITTED",
-	"title": "New proposal submitted",
-	"message": "An investor submitted a proposal.",
-	"isRead": true,
-	"readAt": "2026-05-01T00:00:00.000Z",
-	"metadata": { "proposalId": "uuid" },
-	"createdAt": "2026-05-01T00:00:00.000Z"
+    "id": "uuid",
+    "userId": "uuid",
+    "type": "PROPOSAL_SUBMITTED",
+    "title": "New proposal submitted",
+    "message": "An investor submitted a proposal.",
+    "isRead": true,
+    "readAt": "2026-05-01T00:00:00.000Z",
+    "metadata": { "proposalId": "uuid" },
+    "createdAt": "2026-05-01T00:00:00.000Z"
 }
 ```
 
@@ -1343,12 +1379,12 @@ Body:
 
 ```json
 {
-	"userId": "uuid",
-	"type": "SYSTEM",
-	"title": "Test title",
-	"message": "Test body",
-	"sendEmail": false,
-	"metadata": { "url": "/proposals/uuid" }
+    "userId": "uuid",
+    "type": "SYSTEM",
+    "title": "Test title",
+    "message": "Test body",
+    "sendEmail": false,
+    "metadata": { "url": "/proposals/uuid" }
 }
 ```
 
@@ -1431,4 +1467,3 @@ When changing the server payloads, update the corresponding frontend types in lo
 1. `api/uploads` is referenced by the server bootstrap and frontend client, but no route file is present yet.
 2. The auth contract is externally owned by Better Auth, so the repository only guarantees the proxy mount, not each individual generated subroute.
 3. Some error shapes are not fully normalized; callers should inspect `error`, and optionally `issues`, `status`, `required`, or `missing`.
-

@@ -94,7 +94,7 @@ export function AgreementDetailScreen({
 
   const isInvestor = userId === investorId;
   const isRep = !!userId && repIds.includes(userId);
-  const canCancel = isInvestor || isRep || isAdmin;
+  const canCancel = isAdmin; // Only admins can cancel agreements
   const alreadySigned = agreement.signatures.some((s) => s.signerId === userId);
   const canSign =
     (isInvestor || isRep) &&

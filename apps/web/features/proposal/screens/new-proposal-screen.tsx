@@ -1,4 +1,7 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { ProposalForm } from "@/features/proposal/components/form/proposal-form";
+import { Masthead, PaperGrain } from "@/components/editorial";
 
 export async function NewProposalScreen({
   searchParamsPromise,
@@ -7,21 +10,30 @@ export async function NewProposalScreen({
 }) {
   const { clusterId } = await searchParamsPromise;
   return (
-    <div className="flex flex-1 justify-center bg-gradient-to-b from-emerald-50/30 to-white dark:from-zinc-950 dark:to-zinc-950 px-4 py-8">
-      <div className="w-full max-w-5xl">
-        <header className="mb-6">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-500">
-            FarmLease · Proposal builder
-          </p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-emerald-950 dark:text-emerald-100">
-            Draft a new lease proposal
-          </h1>
-          <p className="mt-1 max-w-xl text-sm text-zinc-600 dark:text-zinc-400">
-            Five quick steps. Save the headline numbers, attach context, and send it to
-            a verified cluster representative.
-          </p>
-        </header>
-        <ProposalForm defaultClusterId={clusterId} />
+    <div className="relative flex flex-1 justify-center bg-stone-50/60 px-4 py-10 dark:bg-stone-950/60 sm:px-8">
+      <PaperGrain />
+      <div className="relative w-full max-w-5xl">
+        <Link
+          href="/proposals"
+          className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-emerald-800/80 transition-colors hover:text-emerald-900 dark:text-emerald-300/80 dark:hover:text-emerald-200"
+        >
+          <ArrowLeft className="h-3 w-3" />
+          Back to the Ledger
+        </Link>
+
+        <div className="mt-5">
+          <Masthead
+            publication="FarmLease · Proposal Composer"
+            kicker="A new draft"
+            title="Compose a lease proposal"
+            italicWord="lease proposal"
+            lede="Five unhurried steps. Set the headline numbers, attach the context, and send it along to a verified cluster representative."
+          />
+        </div>
+
+        <div className="mt-10">
+          <ProposalForm defaultClusterId={clusterId} />
+        </div>
       </div>
     </div>
   );

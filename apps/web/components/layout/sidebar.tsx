@@ -11,9 +11,11 @@ import {
   Plus,
   Settings,
   Users2,
+  UserCog,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { cn } from "@farm-lease/ui/lib/utils";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 type NavItem = {
   href: string;
@@ -21,6 +23,7 @@ type NavItem = {
   label: string;
   folio: string; // roman numeral index
   exact?: boolean;
+  adminOnly?: boolean;
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -28,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/clusters", icon: Users2, label: "Clusters", folio: "ii" },
   { href: "/proposals", icon: FileText, label: "Proposals", folio: "iii" },
   { href: "/agreements", icon: Handshake, label: "Agreements", folio: "iv" },
+  { href: "/admin/users", icon: UserCog, label: "User Admin", folio: "v", adminOnly: true },
 ];
 
 const FUTURE_ITEMS: Array<{ icon: ComponentType<{ className?: string }>; label: string; folio: string }> = [
@@ -41,6 +45,11 @@ interface SidebarContentProps {
 
 function SidebarContent({ collapsed, onToggle }: SidebarContentProps) {
   const pathname = usePathname();
+  const { isAdmin } = useAuth();
+
+  const filteredNavItems = NAV_ITEMS.filter(
+    (item) => !item.adminOnly || isAdmin
+  );
 
   const isActive = (href: string, exact?: boolean) => {
     if (exact) return pathname === href;
@@ -111,7 +120,7 @@ function SidebarContent({ collapsed, onToggle }: SidebarContentProps) {
         )}
 
         <ul className={cn("space-y-0.5", collapsed ? "px-2" : "px-3")}>
-          {NAV_ITEMS.map(({ href, icon: Icon, label, folio, exact }) => {
+          {filteredNavItems.map(({ href, icon: Icon, label, folio, exact }) => {
             const active = isActive(href, exact);
             return (
               <li key={href}>

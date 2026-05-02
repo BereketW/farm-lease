@@ -2,15 +2,56 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "@farm-lease/db";
 import { Role, UserStatus } from "@prisma/client";
+import { requireRole, requireSession } from "../../lib/auth";
 import { getRequestSession } from "../../lib/session";
 
 const router = Router();
+
+// ---------- ADMIN USER MANAGEMENT ----------
+
+router.get("/", requireSession, requireRole(Role.ADMIN), async (req, res, next) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return res.json({ users });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/:id/status", requireSession, requireRole(Role.ADMIN), async (req, res, next) => {
+  try {
+    const parsed = z.object({ status: z.nativeEnum(UserStatus) }).safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "INVALID_BODY", issues: parsed.error.issues });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { status: parsed.data.status },
+    });
+
+    return res.json({ user: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ---------- SETUP PROFILE ----------
 
 const setupProfileSchema = z.object({
   role: z.enum([Role.INVESTOR, Role.FARMER, Role.REPRESENTATIVE]),
 });
 
-/** Called right after registration to set the user's role and create their profile. */
 router.post("/setup-profile", async (req, res, next) => {
   try {
     const session = await getRequestSession(req);

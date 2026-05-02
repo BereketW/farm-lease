@@ -6,28 +6,24 @@ export async function getRequestSession(req: Request) {
   const headerUserId =
     typeof req.headers["x-dev-user-id"] === "string"
       ? (req.headers["x-dev-user-id"] as string)
-      : Array.isArray(req.headers["x-dev-user-id"])
-        ? req.headers["x-dev-user-id"]![0]
-        : undefined;
+      : undefined;
 
-  // In dev, an explicit x-dev-user-id header always wins over the cookie so
-  // the server identity stays in sync with the client-side dev user switcher.
-  if (process.env.NODE_ENV !== "production" && headerUserId) {
-    return getDevImpersonationSession(headerUserId);
-  }
-
+  // 1. Always prioritize real sessions if cookie exists
   const cookie = req.headers.cookie;
-  if (!cookie) {
+  if (cookie) {
+    const headers = new Headers();
+    headers.set("cookie", cookie);
+
+    const session = await auth.api.getSession({ headers });
+    if (session?.user?.id) return session;
+  }
+
+  // 2. Only allow dev impersonation if explicitly enabled
+  if (process.env.ALLOW_DEV_IMPERSONATION === "true" && headerUserId) {
     return getDevImpersonationSession(headerUserId);
   }
 
-  const headers = new Headers();
-  headers.set("cookie", cookie);
-
-  const session = await auth.api.getSession({ headers });
-  if (session?.user?.id) return session;
-
-  return getDevImpersonationSession(headerUserId);
+  return null;
 }
 
 async function getDevImpersonationSession(overrideUserId?: string) {

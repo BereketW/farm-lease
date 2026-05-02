@@ -22,6 +22,7 @@ export function LoginScreen() {
   const { data: session } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +38,7 @@ export function LoginScreen() {
     setError(null);
     setLoading(true);
     try {
-      const result = await signIn.email({ email, password });
+      const result = await signIn.email({ email, password, rememberMe });
       if (result.error) {
         setError(result.error.message ?? "Invalid credentials");
       } else {
@@ -97,7 +98,7 @@ export function LoginScreen() {
               Password
             </Label>
             <Link
-              href="#"
+              href="/forgot-password"
               className="text-xs font-medium text-emerald-700 transition hover:text-emerald-800 hover:underline"
             >
               Forgot password?
@@ -131,6 +132,8 @@ export function LoginScreen() {
         <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground select-none">
           <input
             type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
             className="size-4 cursor-pointer rounded border-input text-emerald-600 focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-0"
           />
           Keep me signed in for 30 days

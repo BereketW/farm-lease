@@ -151,10 +151,16 @@ importers:
       better-auth:
         specifier: ^1.0.0
         version: 1.6.9(@prisma/client@5.22.0(prisma@5.22.0))(next@16.2.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(prisma@5.22.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      nodemailer:
+        specifier: ^6.9.15
+        version: 6.10.1
     devDependencies:
       '@types/node':
         specifier: ^20
         version: 20.19.39
+      '@types/nodemailer':
+        specifier: ^6.4.15
+        version: 6.4.23
       typescript:
         specifier: ^5
         version: 5.9.3
@@ -177,6 +183,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@hookform/resolvers':
+        specifier: ^3.10.0
+        version: 3.10.0(react-hook-form@7.74.0(react@19.2.4))
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.1
@@ -195,9 +204,15 @@ importers:
       react-dom:
         specifier: ^19
         version: 19.2.4(react@19.2.4)
+      react-hook-form:
+        specifier: ^7.74.0
+        version: 7.74.0(react@19.2.4)
       tailwind-merge:
         specifier: ^2.5.4
         version: 2.6.1
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@types/react':
         specifier: ^19

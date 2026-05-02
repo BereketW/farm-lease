@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 
-const AUTH_PATHS = ["/login", "/register"];
+const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

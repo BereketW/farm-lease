@@ -148,8 +148,7 @@ router.post("/:id/sign", async (req, res, next) => {
       details: { role: signerRole },
     });
 
-    // Compute new status: if both sides have signed, move to PENDING_SIGNATURES
-    // (awaiting payment) — otherwise keep DRAFT.
+    // Compute new status and check signature status
     const allSignerIds = [...agreement.signatures.map((s) => s.signerId), actor.id];
     const hasInvestorSig = allSignerIds.includes(agreement.proposal.investorId);
     const hasRepSig = agreement.proposal.cluster.representatives.some((r) =>
@@ -163,18 +162,36 @@ router.post("/:id/sign", async (req, res, next) => {
       data: { status: newStatus },
     });
 
-    // Notify counterparty
+    // Notify parties
     const signer = await prisma.user.findUnique({
       where: { id: actor.id },
       select: { name: true },
     });
-    const counterpartyId = isInvestor ? getPrimaryRepId(agreement) : agreement.proposal.investorId;
-    if (counterpartyId && counterpartyId !== actor.id) {
-      await agreementSignedEvent({
-        recipientIds: [counterpartyId],
-        agreementId: agreement.id,
-        signedByName: signer?.name ?? "Counterparty",
+    
+    if (hasInvestorSig && hasRepSig) {
+      // Both signed
+      const recipients = [agreement.proposal.investorId, getPrimaryRepId(agreement)].filter(
+        (id): id is string => !!id
+      );
+      await dispatchNotification({
+        type: "AGREEMENT_FULLY_SIGNED",
+        recipients,
+        title: "Agreement fully signed",
+        message: "Both parties have signed the agreement. Investor can now upload payment receipts.",
+        metadata: { agreementId: agreement.id, url: `/agreements/${agreement.id}` },
       });
+    } else {
+      // Partial sign - notify the other party it is their turn
+      const counterpartyId = isInvestor ? getPrimaryRepId(agreement) : agreement.proposal.investorId;
+      if (counterpartyId && counterpartyId !== actor.id) {
+        await dispatchNotification({
+          type: "AGREEMENT_YOUR_TURN",
+          recipients: [counterpartyId],
+          title: "Your turn to sign",
+          message: `${signer?.name ?? "Counterparty"} signed the agreement. It is now your turn to review and sign.`,
+          metadata: { agreementId: agreement.id, url: `/agreements/${agreement.id}` },
+        });
+      }
     }
 
     realtime.toAgreement(agreement.id, "agreement:signed", {
@@ -193,7 +210,7 @@ router.post("/:id/sign", async (req, res, next) => {
 
 const cancelSchema = z.object({ reason: z.string().max(500).optional() });
 
-router.post("/:id/cancel", async (req, res, next) => {
+router.post("/:id/cancel", requireRole(Role.ADMIN), async (req, res, next) => {
   try {
     const parsed = cancelSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -203,18 +220,8 @@ router.post("/:id/cancel", async (req, res, next) => {
     if (!agreement) return res.status(404).json({ error: "NOT_FOUND" });
 
     const actor = req.user!;
-    if (
-      !isInvestorOnAgreement(agreement, actor.id) &&
-      !isRepOnAgreement(agreement, actor.id) &&
-      actor.role !== Role.ADMIN
-    ) {
-      return res.status(403).json({ error: "FORBIDDEN" });
-    }
-
-    if (
-      agreement.status === AgreementStatus.COMPLETED ||
-      agreement.status === AgreementStatus.CANCELLED
-    ) {
+    // Admin override for cancellation:
+    if (agreement.status === AgreementStatus.COMPLETED || agreement.status === AgreementStatus.CANCELLED) {
       return res.status(409).json({ error: "INVALID_STATE", status: agreement.status });
     }
 
@@ -233,15 +240,14 @@ router.post("/:id/cancel", async (req, res, next) => {
 
     const repId = getPrimaryRepId(agreement);
     const recipients = [agreement.proposal.investorId, repId].filter(
-      (id): id is string => !!id && id !== actor.id
+      (id): id is string => !!id
     );
-    if (recipients.length > 0) {
-      await agreementCancelledEvent({
-        recipientIds: recipients,
-        agreementId: agreement.id,
-        reason: parsed.data.reason,
-      });
-    }
+    
+    await agreementCancelledEvent({
+      recipientIds: recipients,
+      agreementId: agreement.id,
+      reason: parsed.data.reason,
+    });
 
     realtime.toAgreement(agreement.id, "agreement:cancelled", {
       agreementId: agreement.id,

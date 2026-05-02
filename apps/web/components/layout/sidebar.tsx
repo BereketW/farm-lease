@@ -51,13 +51,10 @@ function SidebarContent({ collapsed, onToggle }: SidebarContentProps) {
         )}
       >
         <Link href="/" className="flex items-center gap-2.5 min-w-0">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-600 text-white shadow-sm">
-            <Sprout className="h-4 w-4" />
-          </span>
-          {!collapsed && (
-            <span className="truncate text-sm font-semibold tracking-tight text-foreground">
-              FarmLease
-            </span>
+          {collapsed ? (
+            <img src="/icon.svg" alt="FarmLease" className="h-10 w-10 shrink-0" />
+          ) : (
+            <img src="/icon-full.svg" alt="FarmLease" className="h-10 w-auto" />
           )}
         </Link>
       </div>
@@ -73,10 +70,10 @@ function SidebarContent({ collapsed, onToggle }: SidebarContentProps) {
                   href={href}
                   title={collapsed ? label : undefined}
                   className={cn(
-                    "group flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm font-medium transition-colors",
+                    "group flex h-9 items-center gap-3 rounded-r-lg px-2.5 text-sm font-medium transition-all border-l-2",
                     active
-                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-600"
+                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 border-transparent"
                   )}
                 >
                   <Icon
@@ -94,16 +91,16 @@ function SidebarContent({ collapsed, onToggle }: SidebarContentProps) {
           })}
 
           <li className="pt-1">
-            <Link
-              href="/proposals/new"
-              title={collapsed ? "New Proposal" : undefined}
-              className={cn(
-                "group flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm font-medium transition-colors",
-                isActive("/proposals/new")
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "bg-emerald-600/10 text-emerald-700 hover:bg-emerald-600/20 dark:bg-emerald-950/60 dark:text-emerald-400 dark:hover:bg-emerald-900/50"
-              )}
-            >
+                <Link
+                  href="/proposals/new"
+                  title={collapsed ? "New Proposal" : undefined}
+                  className={cn(
+                    "group flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm font-medium transition-all border-l-2 border-transparent",
+                    isActive("/proposals/new")
+                      ? "bg-emerald-600 text-white shadow-sm !border-emerald-700"
+                      : "bg-emerald-600/10 text-emerald-700 hover:bg-emerald-600/20 dark:bg-emerald-950/60 dark:text-emerald-400 dark:hover:bg-emerald-900/50"
+                  )}
+                >
               <Plus className="h-4 w-4 shrink-0" />
               {!collapsed && <span className="truncate">New Proposal</span>}
             </Link>

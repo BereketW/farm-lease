@@ -7,7 +7,7 @@ import { getRequestSession } from "../../lib/session";
 const router = Router();
 
 const setupProfileSchema = z.object({
-  role: z.nativeEnum(Role),
+  role: z.enum([Role.INVESTOR, Role.FARMER, Role.REPRESENTATIVE]),
 });
 
 /** Called right after registration to set the user's role and create their profile. */
@@ -28,7 +28,7 @@ router.post("/setup-profile", async (req, res, next) => {
 
     await prisma.user.update({
       where: { id: userId },
-      data: { role, status: UserStatus.ACTIVE },
+      data: { role, status: UserStatus.PENDING }, // Must be PENDING per logic rules
     });
 
     switch (role) {

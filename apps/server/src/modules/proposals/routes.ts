@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Role } from "@prisma/client";
-import { requireRole, requireSession } from "../../lib/auth";
+import { requireActive, requireRole, requireSession } from "../../lib/auth";
 import {
   createProposalDraft,
   createRevision,
@@ -20,6 +20,7 @@ import {
 const router = Router();
 
 router.use(requireSession);
+router.use(requireActive);
 
 // Drafts — must come before /:id routes so "drafts" isn't treated as an id.
 router.post("/drafts", requireRole(Role.INVESTOR), createProposalDraft);

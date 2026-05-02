@@ -23,34 +23,44 @@ export function ProposalRow({ proposal }: { proposal: ProposalSummary }) {
   return (
     <Link
       href={`/proposals/${proposal.id}`}
-      className="group flex items-center gap-4 rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
+      className="group relative flex items-center gap-5 rounded-2xl border border-border/50 bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-300/50 hover:shadow-lg dark:hover:border-emerald-800/50"
     >
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 opacity-0 transition-opacity duration-300 group-hover:from-emerald-500/5 group-hover:to-transparent group-hover:opacity-100" />
+      
       <NameAvatar
         size="md"
         id={proposal.investor.id}
         name={proposal.investor.name}
       />
+      
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <h3 className="truncate text-sm font-semibold text-emerald-950">
+        <div className="flex items-center gap-3">
+          <h3 className="truncate text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
             {proposal.terms?.title ?? proposal.cluster.name}
           </h3>
           <StatusPill status={proposal.status} size="sm" />
         </div>
-        <p className="mt-0.5 truncate text-xs text-zinc-600">
-          {proposal.cluster.name} · {proposal.investor.name ?? "Investor"} ·{" "}
-          {relativeTime(proposal.updatedAt)}
-        </p>
+        <div className="mt-1 flex items-center gap-2 truncate text-sm text-muted-foreground">
+          <span className="font-medium text-foreground/80">{proposal.cluster.name}</span>
+          <span className="h-1 w-1 rounded-full bg-border" />
+          <span>{proposal.investor.name ?? "Investor"}</span>
+          <span className="h-1 w-1 rounded-full bg-border" />
+          <span>{relativeTime(proposal.updatedAt)}</span>
+        </div>
       </div>
-      <div className="hidden text-right sm:block">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Budget
+      
+      <div className="hidden shrink-0 text-right sm:block">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          Investment Budget
         </p>
-        <p className="text-sm font-semibold tabular-nums text-emerald-900">
+        <p className="mt-1 text-lg font-bold tabular-nums tracking-tight text-foreground">
           ETB {Number(proposal.budget).toLocaleString()}
         </p>
       </div>
-      <ArrowUpRight className="hidden h-4 w-4 text-zinc-400 transition group-hover:text-emerald-700 sm:block" />
+      
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted/50 transition-colors group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 sm:h-12 sm:w-12">
+        <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
+      </div>
     </Link>
   );
 }

@@ -23,9 +23,6 @@ export const auth = betterAuth({
       });
     },
   },
-  forgetPassword: {
-    enabled: true,
-  },
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,

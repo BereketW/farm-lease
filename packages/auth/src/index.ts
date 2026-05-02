@@ -56,7 +56,10 @@ export const auth = betterAuth({
       },
     },
   },
-  trustedOrigins: [process.env.WEB_ORIGIN ?? "http://localhost:3001"],
+  trustedOrigins: [
+    process.env.WEB_ORIGIN ?? "http://localhost:3001",
+    process.env.API_ORIGIN ?? "http://localhost:3000",
+  ],
 });
 
 export const { GET, POST } = toNextJsHandler(auth);

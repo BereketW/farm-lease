@@ -11,6 +11,7 @@ import { StepDocuments } from "./step-documents";
 import { StepReview } from "./step-review";
 import { FormStepper } from "./stepper";
 import { useProposalDraft } from "../../hooks/use-proposal-draft";
+import { EditorialButton } from "@/components/editorial";
 
 function relativeSince(ts: number): string {
   const diff = Math.round((Date.now() - ts) / 1000);
@@ -31,9 +32,24 @@ export function ProposalForm({ defaultClusterId }: { defaultClusterId?: string }
   return (
     <form
       className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]"
+      // Prevent implicit Enter-key submission from earlier steps. Only the
+      // explicit "Submit proposal" button on the review step should submit.
+      onKeyDown={(event) => {
+        if (
+          event.key === "Enter" &&
+          !isLast &&
+          (event.target as HTMLElement).tagName !== "TEXTAREA"
+        ) {
+          event.preventDefault();
+        }
+      }}
       onSubmit={form.handleSubmit(
-        (values) => submit.mutate({ values, draftId }),
+        (values) => {
+          if (!isLast) return; // Safety: only submit from review step.
+          submit.mutate({ values, draftId });
+        },
         (errors) => {
+          if (!isLast) return; // Don't surface validation errors mid-wizard.
           const first = Object.values(errors)[0];
           const message =
             (first && "message" in first && (first.message as string)) ||
@@ -46,37 +62,48 @@ export function ProposalForm({ defaultClusterId }: { defaultClusterId?: string }
         <FormStepper stepIndex={stepIndex} />
       </aside>
 
-      <div className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
+      <div className="relative overflow-hidden rounded-sm border border-emerald-950/15 bg-white/80 p-6 shadow-[0_1px_0_rgba(0,0,0,0.02)] backdrop-blur-[1px] dark:border-emerald-400/15 dark:bg-stone-950/50 sm:p-8">
+        {/* Paper edge accents */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-800/30 to-transparent dark:via-emerald-300/30"
+        />
+
         {savedAt !== null || saving || error ? (
           <div
             className={
               error
-                ? "mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs"
-                : "mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2 text-xs"
+                ? "mb-5 flex flex-wrap items-center justify-between gap-2 border-l-2 border-amber-600 bg-amber-50/60 px-3 py-2 text-[11px] dark:border-amber-400 dark:bg-amber-950/30"
+                : "mb-5 flex flex-wrap items-center justify-between gap-2 border-l-2 border-emerald-700 bg-emerald-50/40 px-3 py-2 text-[11px] dark:border-emerald-400 dark:bg-emerald-950/30"
             }
           >
             <span
               className={
                 error
-                  ? "inline-flex items-center gap-1.5 text-amber-900"
-                  : "inline-flex items-center gap-1.5 text-emerald-800"
+                  ? "inline-flex items-center gap-1.5 uppercase tracking-[0.14em] text-amber-900 dark:text-amber-200"
+                  : "inline-flex items-center gap-1.5 uppercase tracking-[0.14em] text-emerald-800 dark:text-emerald-200"
               }
             >
               {error ? (
                 <>
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  Draft save failed: {error}
+                  <AlertTriangle className="h-3 w-3" />
+                  Draft save failed · {error}
                 </>
               ) : saving ? (
                 <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-3 w-3 animate-spin" />
                   Saving draft…
                 </>
               ) : (
                 <>
-                  <Save className="h-3.5 w-3.5" />
+                  <Save className="h-3 w-3" />
                   {restored ? "Draft restored" : "Draft saved"} ·{" "}
-                  {savedAt ? relativeSince(savedAt) : "just now"}
+                  <span
+                    className="font-mono normal-case tracking-normal"
+                    style={{ fontFamily: "var(--font-geist-mono)" }}
+                  >
+                    {savedAt ? relativeSince(savedAt) : "just now"}
+                  </span>
                 </>
               )}
             </span>
@@ -90,7 +117,7 @@ export function ProposalForm({ defaultClusterId }: { defaultClusterId?: string }
                     void discard();
                   }
                 }}
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium text-rose-700 hover:bg-rose-50"
+                className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em] text-rose-700 transition-colors hover:text-rose-900 dark:text-rose-400 dark:hover:text-rose-200"
               >
                 <Trash2 className="h-3 w-3" />
                 Discard
@@ -107,34 +134,32 @@ export function ProposalForm({ defaultClusterId }: { defaultClusterId?: string }
         ) : null}
         {stepId === "review" ? <StepReview form={form} /> : null}
 
-        <div className="mt-8 flex items-center justify-between border-t border-zinc-100 pt-5">
-          <button
+        <div className="mt-10 flex items-center justify-between border-t border-emerald-950/10 pt-5 dark:border-emerald-400/10">
+          <EditorialButton
             type="button"
+            variant="ghost"
             onClick={back}
             disabled={stepIndex === 0}
-            className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
             Back
-          </button>
+          </EditorialButton>
           {isLast ? (
-            <button
+            <EditorialButton
               type="submit"
+              variant="primary"
+              size="lg"
+              shimmer
               disabled={submit.isPending}
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
             >
               <Sparkles className="h-3.5 w-3.5" />
               {submit.isPending ? "Submitting…" : "Submit proposal"}
-            </button>
+            </EditorialButton>
           ) : (
-            <button
-              type="button"
-              onClick={next}
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-            >
-              Next
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
+            <EditorialButton type="button" variant="primary" onClick={next}>
+              Next chapter
+              <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+            </EditorialButton>
           )}
         </div>
       </div>

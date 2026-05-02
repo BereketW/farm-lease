@@ -3,10 +3,12 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { MapPin, Search, Sprout, Users, ArrowUpRight, SlidersHorizontal } from "lucide-react";
+import { MapPin, Search, Sprout, Users, ArrowUpRight, SlidersHorizontal, Plus } from "lucide-react";
 import { listClusters } from "@/features/cluster/datasource/clusters";
 import { Input } from "@farm-lease/ui/components/input";
 import { cn } from "@farm-lease/ui/lib/utils";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { Masthead, PaperGrain, EditorialButton } from "@/components/editorial";
 
 const SIZE_BUCKETS: Array<{
   label: string;
@@ -25,6 +27,7 @@ export function ClustersScreen() {
   const [cropType, setCropType] = useState<string | null>(null);
   const [sizeIdx, setSizeIdx] = useState(0);
 
+  const { isAdmin, isRepresentative, isInvestor } = useAuth();
   const sizeRange = SIZE_BUCKETS[sizeIdx];
 
   const query = useQuery({
@@ -56,148 +59,194 @@ export function ClustersScreen() {
     return haystack.includes(search.toLowerCase());
   });
 
+  const role = isAdmin
+    ? { kicker: "Global oversight", title: "All clusters" }
+    : isRepresentative
+    ? { kicker: "Cluster desk", title: "Your clusters" }
+    : { kicker: "Investment opportunities", title: "Verified clusters" };
+
+  const lede = isAdmin
+    ? "Review pending registrations, verify land documentation, and oversee all active farming clusters."
+    : isRepresentative
+    ? "Manage your registered clusters, update boundaries, and track member farmers."
+    : "Browse government-verified farmer clusters available for lease investment.";
+
   return (
-    <div className="mx-auto w-full max-w-[1600px] px-6 py-10">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Clusters
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Verified farmer clusters open to investment.
-          </p>
+    <div className="relative flex flex-1 flex-col bg-stone-50/60 dark:bg-stone-950/60">
+      <PaperGrain />
+
+      <header className="relative border-b border-emerald-950/15 bg-gradient-to-b from-stone-50/90 to-transparent px-6 pb-10 pt-10 dark:border-emerald-400/15 dark:from-stone-950/80 sm:px-10 lg:px-14">
+        <div className="relative mx-auto w-full max-w-[1400px]">
+          <Masthead
+            publication="FarmLease · Land Registry"
+            kicker={role.kicker}
+            title={role.title}
+            lede={lede}
+            cta={
+              isRepresentative ? (
+                <Link href="/clusters/register">
+                  <EditorialButton variant="primary" size="lg" shimmer>
+                    <Plus className="h-3.5 w-3.5" />
+                    Register cluster
+                    <ArrowUpRight className="h-3.5 w-3.5 opacity-60 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </EditorialButton>
+                </Link>
+              ) : null
+            }
+          />
         </div>
       </header>
 
-      {/* Filters */}
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="relative min-w-0 flex-1 max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search clusters by name, region…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+      <main className="relative mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-10 lg:px-14">
+        {/* Filters */}
+        <div className="mb-5 flex flex-wrap items-center gap-3">
+          <div className="relative min-w-0 flex-1 max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search clusters by name, region…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-11 rounded-xl border-border/50 bg-card shadow-sm"
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Filter rows */}
-      <div className="mb-5 space-y-2">
-        {regions.length > 0 ? (
-          <FilterRow
-            icon={<SlidersHorizontal className="size-3.5 text-muted-foreground" />}
-            label="Region"
-          >
-            <FilterChip active={!region} onClick={() => setRegion(null)}>
-              All
-            </FilterChip>
-            {regions.map((r) => (
-              <FilterChip
-                key={r}
-                active={region === r}
-                onClick={() => setRegion(r === region ? null : r)}
-              >
-                {r}
-              </FilterChip>
-            ))}
-          </FilterRow>
-        ) : null}
-
-        {cropTypes.length > 0 ? (
-          <FilterRow icon={<Sprout className="size-3.5 text-muted-foreground" />} label="Crop">
-            <FilterChip active={!cropType} onClick={() => setCropType(null)}>
-              All crops
-            </FilterChip>
-            {cropTypes.map((c) => (
-              <FilterChip
-                key={c}
-                active={cropType === c}
-                onClick={() => setCropType(c === cropType ? null : c)}
-              >
-                {c}
-              </FilterChip>
-            ))}
-          </FilterRow>
-        ) : null}
-
-        <FilterRow icon={<Users className="size-3.5 text-muted-foreground" />} label="Size">
-          {SIZE_BUCKETS.map((b, i) => (
-            <FilterChip
-              key={b.label}
-              active={sizeIdx === i}
-              onClick={() => setSizeIdx(i)}
+        {/* Filter rows */}
+        <div className="mb-8 space-y-3">
+          {regions.length > 0 ? (
+            <FilterRow
+              icon={<SlidersHorizontal className="size-3.5 text-muted-foreground" />}
+              label="Region"
             >
-              {b.label}
-            </FilterChip>
-          ))}
-        </FilterRow>
-      </div>
+              <FilterChip active={!region} onClick={() => setRegion(null)}>
+                All
+              </FilterChip>
+              {regions.map((r) => (
+                <FilterChip
+                  key={r}
+                  active={region === r}
+                  onClick={() => setRegion(r === region ? null : r)}
+                >
+                  {r}
+                </FilterChip>
+              ))}
+            </FilterRow>
+          ) : null}
 
-      {query.isLoading ? (
-        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-          Loading clusters…
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
-          <Sprout className="mx-auto size-10 text-muted-foreground/60" />
-          <p className="mt-3 text-sm font-medium text-foreground">No clusters match your filters</p>
-        </div>
-      ) : (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((cluster) => {
-            const primaryRep = cluster.representatives?.find((r) => r.isPrimary) ?? cluster.representatives?.[0];
-            return (
-              <Link
-                key={cluster.id}
-                href={`/clusters/${cluster.id}`}
-                className="group flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
+          {cropTypes.length > 0 ? (
+            <FilterRow icon={<Sprout className="size-3.5 text-muted-foreground" />} label="Crop">
+              <FilterChip active={!cropType} onClick={() => setCropType(null)}>
+                All crops
+              </FilterChip>
+              {cropTypes.map((c) => (
+                <FilterChip
+                  key={c}
+                  active={cropType === c}
+                  onClick={() => setCropType(c === cropType ? null : c)}
+                >
+                  {c}
+                </FilterChip>
+              ))}
+            </FilterRow>
+          ) : null}
+
+          <FilterRow icon={<Users className="size-3.5 text-muted-foreground" />} label="Size">
+            {SIZE_BUCKETS.map((b, i) => (
+              <FilterChip
+                key={b.label}
+                active={sizeIdx === i}
+                onClick={() => setSizeIdx(i)}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
-                    {cluster.name}
-                  </h3>
-                  <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition group-hover:text-emerald-700" />
-                </div>
-                {cluster.region ? (
-                  <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="size-3.5" />
-                    {cluster.region}
-                  </p>
-                ) : null}
-                {cluster.description ? (
-                  <p className="line-clamp-2 text-xs text-muted-foreground/90">
-                    {cluster.description}
-                  </p>
-                ) : null}
-                {cluster.cropTypes && cluster.cropTypes.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {cluster.cropTypes.slice(0, 3).map((c) => (
-                      <span
-                        key={c}
-                        className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-800 ring-1 ring-emerald-100"
-                      >
-                        {c}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-                <div className="mt-auto flex items-center justify-between border-t border-border pt-2 text-[11px] text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <Users className="size-3" />
-                    {cluster._count?.farmers ?? 0} farmers · {cluster._count?.proposals ?? 0} proposals
-                  </span>
-                  {primaryRep?.user?.name ? (
-                    <span className="truncate max-w-[50%]">
-                      {primaryRep.user.name}
-                    </span>
-                  ) : null}
-                </div>
-              </Link>
-            );
-          })}
+                {b.label}
+              </FilterChip>
+            ))}
+          </FilterRow>
         </div>
-      )}
+
+        {query.isLoading ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-32 animate-pulse rounded-2xl border border-border/50 bg-muted/30"
+              />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border/50 bg-card/50 px-6 py-12 text-center">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-muted/50 text-muted-foreground ring-1 ring-border/50">
+              <Sprout className="h-5 w-5" />
+            </span>
+            <p className="text-sm font-medium text-foreground">No clusters match your filters</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((cluster) => {
+              const primaryRep = cluster.representatives?.find((r) => r.isPrimary) ?? cluster.representatives?.[0];
+              return (
+                <Link
+                  key={cluster.id}
+                  href={`/clusters/${cluster.id}`}
+                  className="group relative flex flex-col gap-3 rounded-2xl border border-border/50 bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-300/50 hover:shadow-lg dark:hover:border-emerald-800/50"
+                >
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 opacity-0 transition-opacity duration-300 group-hover:from-emerald-500/5 group-hover:to-emerald-500/10 group-hover:opacity-100" />
+                  
+                  <div className="flex items-start justify-between gap-3 relative">
+                    <h3 className="line-clamp-2 text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
+                      {cluster.name}
+                    </h3>
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted/50 transition-colors group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50">
+                      <ArrowUpRight className="size-4 text-muted-foreground transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground relative">
+                    {cluster.region ? (
+                      <span className="flex items-center gap-1.5 font-medium text-foreground/80">
+                        <MapPin className="size-3.5" />
+                        {cluster.region}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {cluster.description ? (
+                    <p className="line-clamp-2 text-sm text-muted-foreground/90 relative">
+                      {cluster.description}
+                    </p>
+                  ) : null}
+
+                  {cluster.cropTypes && cluster.cropTypes.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 relative">
+                      {cluster.cropTypes.slice(0, 3).map((c) => (
+                        <span
+                          key={c}
+                          className="rounded-lg bg-emerald-50/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-800 ring-1 ring-emerald-200/50 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/50"
+                        >
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="mt-auto flex items-center justify-between border-t border-border/50 pt-3 text-[11px] font-medium text-muted-foreground relative">
+                    <span className="flex items-center gap-1.5">
+                      <Users className="size-3.5" />
+                      {cluster._count?.farmers ?? 0} farmers
+                      <span className="h-1 w-1 rounded-full bg-border" />
+                      {cluster._count?.proposals ?? 0} proposals
+                    </span>
+                    {primaryRep?.user?.name ? (
+                      <span className="truncate max-w-[40%] text-foreground/70">
+                        {primaryRep.user.name}
+                      </span>
+                    ) : null}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
@@ -212,12 +261,14 @@ function FilterRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="flex items-center gap-1.5 min-w-[70px] text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {icon}
         {label}
       </span>
-      <div className="flex flex-wrap gap-1">{children}</div>
+      <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border/50 bg-muted/20 p-1 backdrop-blur-sm">
+        {children}
+      </div>
     </div>
   );
 }
@@ -236,10 +287,10 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full px-2.5 py-1 text-xs font-medium transition",
+        "relative rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200 ease-in-out",
         active
-          ? "bg-emerald-600 text-white"
-          : "bg-accent text-muted-foreground hover:bg-emerald-100 hover:text-emerald-900"
+          ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
+          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
       )}
     >
       {children}

@@ -45,34 +45,101 @@ export function DashboardTabs() {
   }, [proposals, filter]);
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Metric label="Total" value={counts.all} />
-        <Metric label="In flight" value={counts.pending} tone="amber" />
-        <Metric label="Accepted" value={counts.approved} tone="emerald" />
-        <Metric label="Closed" value={counts.rejected} tone="rose" />
-      </div>
+    <div className="space-y-8">
+      {/* Almanac / Metrics */}
+      <section>
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2
+            className="font-serif text-[13px] italic text-emerald-800 dark:text-emerald-300"
+            style={{ fontFamily: "var(--font-fraunces)" }}
+          >
+            The Almanac
+          </h2>
+          <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-stone-500 dark:text-stone-500">
+            Season summary
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-emerald-950/10 bg-emerald-950/10 dark:border-emerald-400/10 dark:bg-emerald-400/10 sm:grid-cols-4">
+          <Metric
+            label="All entries"
+            value={counts.all}
+            hint="Total in the ledger"
+            index="i"
+            className="rounded-none border-0"
+          />
+          <Metric
+            label="In flight"
+            value={counts.pending}
+            tone="amber"
+            hint="Awaiting review or in negotiation"
+            index="ii"
+            className="rounded-none border-0"
+          />
+          <Metric
+            label="Accepted"
+            value={counts.approved}
+            tone="emerald"
+            hint="Converted to agreement"
+            index="iii"
+            className="rounded-none border-0"
+          />
+          <Metric
+            label="Closed"
+            value={counts.rejected}
+            tone="rose"
+            hint="Rejected or withdrawn"
+            index="iv"
+            className="rounded-none border-0"
+          />
+        </div>
+      </section>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border/50 bg-muted/30 p-1.5 backdrop-blur-sm w-fit">
+      {/* Filter: underlined editorial tabs */}
+      <nav
+        className="flex flex-wrap items-end gap-x-6 gap-y-2 border-b border-emerald-950/10 dark:border-emerald-400/10"
+        aria-label="Filter proposals"
+      >
         {FILTERS.map((f) => {
           const active = filter === f.id;
+          const countByTab: Record<string, number> = counts;
           return (
             <button
               key={f.id}
               type="button"
               onClick={() => setFilter(f.id)}
               className={cn(
-                "relative rounded-xl px-5 py-2 text-sm font-medium transition-all duration-200 ease-in-out",
+                "group relative -mb-px flex items-baseline gap-2 border-b-2 pb-3 pt-1 transition-colors",
                 active
-                  ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
-                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                  ? "border-emerald-800 dark:border-emerald-300"
+                  : "border-transparent hover:border-emerald-800/30 dark:hover:border-emerald-400/30"
               )}
             >
-              {f.label}
+              <span
+                className={cn(
+                  "font-serif text-[15px] italic tracking-tight transition-colors",
+                  active
+                    ? "text-emerald-900 dark:text-emerald-100"
+                    : "text-stone-500 group-hover:text-emerald-900 dark:text-stone-400 dark:group-hover:text-emerald-200"
+                )}
+                style={{ fontFamily: "var(--font-fraunces)" }}
+              >
+                {f.label}
+              </span>
+              <span
+                className={cn(
+                  "font-mono text-[10px] tabular-nums transition-colors",
+                  active
+                    ? "text-emerald-700 dark:text-emerald-400"
+                    : "text-stone-400 dark:text-stone-500"
+                )}
+                style={{ fontFamily: "var(--font-geist-mono)" }}
+              >
+                {String(countByTab[f.id] ?? 0).padStart(2, "0")}
+              </span>
             </button>
           );
         })}
-      </div>
+      </nav>
 
       <ProposalsTable proposals={visible} isLoading={query.isLoading} />
     </div>

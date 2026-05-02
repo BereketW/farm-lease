@@ -1,12 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { Sprout, Wheat } from "lucide-react";
-import type { ProposalSummary } from "@/lib/api/types";
-import { ProposalRow } from "./proposal-row";
+import { Sprout } from "lucide-react";
+import type { ClusterSummary } from "@/lib/api/types";
+import { ClusterRow } from "./cluster-row";
 import {
-  EditorialButton,
   EditorialEmpty,
   EditorialPagination,
   EditorialSearch,
@@ -16,29 +14,27 @@ import {
 const PAGE_SIZE = 12;
 
 type Props = {
-  proposals: ProposalSummary[];
+  clusters: ClusterSummary[];
   isLoading: boolean;
   emptyHint?: string;
 };
 
-export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
+export function ClustersTable({ clusters, isLoading, emptyHint }: Props) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return proposals;
-    return proposals.filter((p) => {
-      const title = p.terms?.title ?? p.cluster.name;
-      const crop = (p.terms as { cropType?: string } | undefined)?.cropType ?? "";
+    if (!q) return clusters;
+    return clusters.filter((c) => {
+      const region = c.region ?? "";
       return (
-        title.toLowerCase().includes(q) ||
-        p.cluster.name.toLowerCase().includes(q) ||
-        (p.investor.name ?? "").toLowerCase().includes(q) ||
-        crop.toLowerCase().includes(q)
+        c.name.toLowerCase().includes(q) ||
+        region.toLowerCase().includes(q) ||
+        (c.description ?? "").toLowerCase().includes(q)
       );
     });
-  }, [proposals, search]);
+  }, [clusters, search]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -55,7 +51,7 @@ export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
   /* ── loading ── */
   if (isLoading) {
     return (
-      <EditorialTable title="The Ledger" eyebrow="Active proposals" footer={false}>
+      <EditorialTable title="The Ledger" eyebrow="Registered clusters" footer={false}>
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
@@ -74,21 +70,13 @@ export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
     );
   }
 
-  /* ── empty (no proposals at all) ── */
-  if (proposals.length === 0) {
+  /* ── empty (no clusters at all) ── */
+  if (clusters.length === 0) {
     return (
       <EditorialEmpty
-        icon={<Wheat className="h-6 w-6" />}
-        title={emptyHint ?? "The ledger is empty."}
-        description="Draft your first proposal to begin a negotiation with a verified cluster representative."
-        action={
-          <Link href="/proposals/new">
-            <EditorialButton variant="primary" shimmer>
-              <Sprout className="h-3.5 w-3.5" />
-              Draft a proposal
-            </EditorialButton>
-          </Link>
-        }
+        icon={<Sprout className="h-6 w-6" />}
+        title={emptyHint ?? "The registry is empty."}
+        description="No farmer clusters have been verified or registered yet."
       />
     );
   }
@@ -101,7 +89,7 @@ export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
         <EditorialSearch
           value={search}
           onChange={handleSearch}
-          placeholder="Search by title, cluster, investor, crop…"
+          placeholder="Search by cluster name, region, description…"
           className="w-full sm:max-w-md"
         />
         <span
@@ -116,21 +104,21 @@ export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
 
       {filtered.length === 0 ? (
         <EditorialEmpty
-          icon={<Wheat className="h-6 w-6" />}
-          title="No proposals match your search."
+          icon={<Sprout className="h-6 w-6" />}
+          title="No clusters match your search."
           description="Try a different term, or clear the search to see everything."
         />
       ) : (
         <EditorialTable
           title="The Ledger"
-          eyebrow="Active proposals"
+          eyebrow="Registered clusters"
           count={filtered.length}
           footer={false}
         >
-          {paged.map((proposal, i) => (
-            <ProposalRow
-              key={proposal.id}
-              proposal={proposal}
+          {paged.map((cluster, i) => (
+            <ClusterRow
+              key={cluster.id}
+              cluster={cluster}
               index={(safePage - 1) * PAGE_SIZE + i}
             />
           ))}

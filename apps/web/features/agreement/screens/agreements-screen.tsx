@@ -1,144 +1,190 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FileSignature, MapPin, Users, Calendar } from "lucide-react";
 import { listAgreements } from "@/features/agreement/datasource/agreements";
 import type { AgreementStatus } from "@/lib/api/types";
 import { cn } from "@farm-lease/ui/lib/utils";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { Masthead, PaperGrain } from "@/components/editorial";
+import { Metric } from "@/components/editorial";
+import { AgreementsTable } from "../components/dashboard/agreements-table";
 
-const STATUS_FILTERS: Array<{ label: string; value: AgreementStatus | "ALL" }> = [
-  { label: "All", value: "ALL" },
-  { label: "Draft", value: "DRAFT" },
-  { label: "Pending Signatures", value: "PENDING_SIGNATURES" },
-  { label: "Active", value: "ACTIVE" },
-  { label: "Completed", value: "COMPLETED" },
-  { label: "Cancelled", value: "CANCELLED" },
+const STATUS_FILTERS: Array<{ id: AgreementStatus | "ALL", label: string }> = [
+  { id: "ALL", label: "All" },
+  { id: "DRAFT", label: "Drafts" },
+  { id: "PENDING_SIGNATURES", label: "Awaiting Signatures" },
+  { id: "ACTIVE", label: "Active" },
+  { id: "COMPLETED", label: "Completed" },
+  { id: "CANCELLED", label: "Cancelled" },
 ];
-
-const STATUS_STYLES: Record<AgreementStatus, string> = {
-  DRAFT: "bg-zinc-100 text-zinc-700 ring-zinc-200",
-  PENDING_SIGNATURES: "bg-amber-50 text-amber-800 ring-amber-200",
-  ACTIVE: "bg-emerald-50 text-emerald-800 ring-emerald-200",
-  COMPLETED: "bg-blue-50 text-blue-800 ring-blue-200",
-  CANCELLED: "bg-rose-50 text-rose-800 ring-rose-200",
-};
 
 export function AgreementsScreen() {
   const [filter, setFilter] = useState<AgreementStatus | "ALL">("ALL");
+  const { isAdmin, isRepresentative } = useAuth();
 
   const query = useQuery({
-    queryKey: ["agreements", filter],
-    queryFn: () =>
-      listAgreements(filter === "ALL" ? undefined : { status: filter }),
+    queryKey: ["agreements"],
+    queryFn: () => listAgreements(),
   });
 
+  const agreements = useMemo(
+    () => query.data?.agreements ?? [],
+    [query.data]
+  );
+
+  const visible = useMemo(() => {
+    if (filter === "ALL") return agreements;
+    return agreements.filter((a) => a.status === filter);
+  }, [agreements, filter]);
+
+  const counts = useMemo(() => {
+    const c = { all: agreements.length, pending: 0, active: 0, closed: 0 };
+    for (const a of agreements) {
+      if (a.status === "DRAFT" || a.status === "PENDING_SIGNATURES") c.pending += 1;
+      else if (a.status === "ACTIVE") c.active += 1;
+      else if (a.status === "COMPLETED" || a.status === "CANCELLED") c.closed += 1;
+    }
+    return c;
+  }, [agreements]);
+
+  const role = isAdmin
+    ? { kicker: "Global oversight", title: "All agreements" }
+    : isRepresentative
+    ? { kicker: "Cluster desk", title: "Active contracts" }
+    : { kicker: "Investor desk", title: "Your contracts" };
+
+  const lede = isAdmin
+    ? "Monitor executed contracts, pending signatures, and payments across all clusters globally."
+    : isRepresentative
+    ? "Manage your active cluster lease contracts and verify offline payment receipts."
+    : "Track your active lease agreements, manage signatures, and upload payment receipts.";
+
   return (
-    <div className="mx-auto w-full max-w-[1600px] px-6 py-10">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Agreements
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Digital lease contracts between investors and farmer clusters.
-          </p>
+    <div className="relative flex flex-1 flex-col bg-stone-50/60 dark:bg-stone-950/60">
+      <PaperGrain />
+
+      <header className="relative border-b border-emerald-950/15 bg-gradient-to-b from-stone-50/90 to-transparent px-6 pb-10 pt-10 dark:border-emerald-400/15 dark:from-stone-950/80 sm:px-10 lg:px-14">
+        <div className="relative mx-auto w-full max-w-[1400px]">
+          <Masthead
+            publication="FarmLease · Agreement Ledger"
+            kicker={role.kicker}
+            title={role.title}
+            lede={lede}
+          />
         </div>
       </header>
 
-      <div className="mb-4 flex flex-wrap gap-1.5">
-        {STATUS_FILTERS.map((f) => (
-          <button
-            key={f.value}
-            type="button"
-            onClick={() => setFilter(f.value)}
-            className={cn(
-              "rounded-full px-3 py-1 text-xs font-medium transition",
-              filter === f.value
-                ? "bg-emerald-600 text-white"
-                : "bg-accent text-muted-foreground hover:bg-emerald-100 hover:text-emerald-900"
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {query.isLoading ? (
-        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-          Loading agreements…
-        </div>
-      ) : query.error ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">
-          {(query.error as Error).message}
-        </div>
-      ) : !query.data?.agreements.length ? (
-        <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
-          <FileSignature className="mx-auto size-10 text-muted-foreground/60" />
-          <p className="mt-3 text-sm font-medium text-foreground">No agreements yet</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Agreements appear here once a proposal is accepted.
-          </p>
-        </div>
-      ) : (
-        <ul className="space-y-2">
-          {query.data.agreements.map((a) => (
-            <li key={a.id}>
-              <Link
-                href={`/agreements/${a.id}`}
-                className="group block rounded-xl border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
+      <main className="relative mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-10 lg:px-14">
+        <div className="space-y-8">
+          {/* Almanac / Metrics */}
+          <section>
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2
+                className="font-serif text-[13px] italic text-emerald-800 dark:text-emerald-300"
+                style={{ fontFamily: "var(--font-fraunces)" }}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="truncate text-sm font-semibold text-foreground">
-                        {a.proposal.cluster.name}
-                      </h3>
-                      <span
-                        className={cn(
-                          "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ring-1",
-                          STATUS_STYLES[a.status]
-                        )}
-                      >
-                        {a.status.replace("_", " ")}
-                      </span>
-                    </div>
-                    <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-1">
-                        <Users className="size-3.5" />
-                        {a.proposal.investor.name ?? "Investor"}
-                      </span>
-                      {a.proposal.cluster.region ? (
-                        <span className="inline-flex items-center gap-1">
-                          <MapPin className="size-3.5" />
-                          {a.proposal.cluster.region}
-                        </span>
-                      ) : null}
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="size-3.5" />
-                        {new Date(a.startDate).toLocaleDateString()} →{" "}
-                        {new Date(a.endDate).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Budget
-                    </p>
-                    <p className="text-sm font-semibold tabular-nums text-foreground">
-                      ETB {Number(a.proposal.budget).toLocaleString()}
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
-                      {a.signatures.length} / 2 signed
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+                The Almanac
+              </h2>
+              <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-stone-500 dark:text-stone-500">
+                Contract summary
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-emerald-950/10 bg-emerald-950/10 dark:border-emerald-400/10 dark:bg-emerald-400/10 sm:grid-cols-4">
+              <Metric
+                label="All entries"
+                value={counts.all}
+                hint="Total in the ledger"
+                index="i"
+                className="rounded-none border-0"
+              />
+              <Metric
+                label="Pending"
+                value={counts.pending}
+                tone="amber"
+                hint="Drafts or awaiting signatures"
+                index="ii"
+                className="rounded-none border-0"
+              />
+              <Metric
+                label="Active"
+                value={counts.active}
+                tone="emerald"
+                hint="Currently active leases"
+                index="iii"
+                className="rounded-none border-0"
+              />
+              <Metric
+                label="Closed"
+                value={counts.closed}
+                tone="default"
+                hint="Completed or cancelled"
+                index="iv"
+                className="rounded-none border-0"
+              />
+            </div>
+          </section>
+
+          {/* Filter: underlined editorial tabs */}
+          <nav
+            className="flex flex-wrap items-end gap-x-6 gap-y-2 border-b border-emerald-950/10 dark:border-emerald-400/10"
+            aria-label="Filter agreements"
+          >
+            {STATUS_FILTERS.map((f) => {
+              const active = filter === f.id;
+              
+              // Compute dynamic counts per tab
+              let tabCount = 0;
+              if (f.id === "ALL") tabCount = counts.all;
+              else if (f.id === "DRAFT" || f.id === "PENDING_SIGNATURES") {
+                 tabCount = agreements.filter(a => a.status === f.id).length;
+              } else if (f.id === "ACTIVE") tabCount = counts.active;
+              else if (f.id === "COMPLETED" || f.id === "CANCELLED") {
+                 tabCount = agreements.filter(a => a.status === f.id).length;
+              }
+
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFilter(f.id)}
+                  className={cn(
+                    "group relative -mb-px flex items-baseline gap-2 border-b-2 pb-3 pt-1 transition-colors",
+                    active
+                      ? "border-emerald-800 dark:border-emerald-300"
+                      : "border-transparent hover:border-emerald-800/30 dark:hover:border-emerald-400/30"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "font-serif text-[15px] italic tracking-tight transition-colors",
+                      active
+                        ? "text-emerald-900 dark:text-emerald-100"
+                        : "text-stone-500 group-hover:text-emerald-900 dark:text-stone-400 dark:group-hover:text-emerald-200"
+                    )}
+                    style={{ fontFamily: "var(--font-fraunces)" }}
+                  >
+                    {f.label}
+                  </span>
+                  <span
+                    className={cn(
+                      "font-mono text-[10px] tabular-nums transition-colors",
+                      active
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : "text-stone-400 dark:text-stone-500"
+                    )}
+                    style={{ fontFamily: "var(--font-geist-mono)" }}
+                  >
+                    {String(tabCount).padStart(2, "0")}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+
+          <AgreementsTable agreements={visible} isLoading={query.isLoading} />
+        </div>
+      </main>
     </div>
   );
 }

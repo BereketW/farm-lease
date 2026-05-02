@@ -1,12 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { Sprout, Wheat } from "lucide-react";
-import type { ProposalSummary } from "@/lib/api/types";
-import { ProposalRow } from "./proposal-row";
+import { FileSignature } from "lucide-react";
+import type { AgreementSummary } from "@/lib/api/types";
+import { AgreementRow } from "./agreement-row";
 import {
-  EditorialButton,
   EditorialEmpty,
   EditorialPagination,
   EditorialSearch,
@@ -16,29 +14,29 @@ import {
 const PAGE_SIZE = 12;
 
 type Props = {
-  proposals: ProposalSummary[];
+  agreements: AgreementSummary[];
   isLoading: boolean;
   emptyHint?: string;
 };
 
-export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
+export function AgreementsTable({ agreements, isLoading, emptyHint }: Props) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return proposals;
-    return proposals.filter((p) => {
-      const title = p.terms?.title ?? p.cluster.name;
-      const crop = (p.terms as { cropType?: string } | undefined)?.cropType ?? "";
+    if (!q) return agreements;
+    return agreements.filter((a) => {
+      const title = a.proposal.cluster.name;
+      const investor = a.proposal.investor.name ?? "";
+      const region = a.proposal.cluster.region ?? "";
       return (
         title.toLowerCase().includes(q) ||
-        p.cluster.name.toLowerCase().includes(q) ||
-        (p.investor.name ?? "").toLowerCase().includes(q) ||
-        crop.toLowerCase().includes(q)
+        investor.toLowerCase().includes(q) ||
+        region.toLowerCase().includes(q)
       );
     });
-  }, [proposals, search]);
+  }, [agreements, search]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -55,7 +53,7 @@ export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
   /* ── loading ── */
   if (isLoading) {
     return (
-      <EditorialTable title="The Ledger" eyebrow="Active proposals" footer={false}>
+      <EditorialTable title="The Ledger" eyebrow="Active agreements" footer={false}>
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
@@ -74,21 +72,13 @@ export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
     );
   }
 
-  /* ── empty (no proposals at all) ── */
-  if (proposals.length === 0) {
+  /* ── empty (no agreements at all) ── */
+  if (agreements.length === 0) {
     return (
       <EditorialEmpty
-        icon={<Wheat className="h-6 w-6" />}
+        icon={<FileSignature className="h-6 w-6" />}
         title={emptyHint ?? "The ledger is empty."}
-        description="Draft your first proposal to begin a negotiation with a verified cluster representative."
-        action={
-          <Link href="/proposals/new">
-            <EditorialButton variant="primary" shimmer>
-              <Sprout className="h-3.5 w-3.5" />
-              Draft a proposal
-            </EditorialButton>
-          </Link>
-        }
+        description="No agreements found. Agreements will appear here once a proposal is accepted."
       />
     );
   }
@@ -101,7 +91,7 @@ export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
         <EditorialSearch
           value={search}
           onChange={handleSearch}
-          placeholder="Search by title, cluster, investor, crop…"
+          placeholder="Search by cluster, investor, region…"
           className="w-full sm:max-w-md"
         />
         <span
@@ -116,21 +106,21 @@ export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
 
       {filtered.length === 0 ? (
         <EditorialEmpty
-          icon={<Wheat className="h-6 w-6" />}
-          title="No proposals match your search."
+          icon={<FileSignature className="h-6 w-6" />}
+          title="No agreements match your search."
           description="Try a different term, or clear the search to see everything."
         />
       ) : (
         <EditorialTable
           title="The Ledger"
-          eyebrow="Active proposals"
+          eyebrow="Active agreements"
           count={filtered.length}
           footer={false}
         >
-          {paged.map((proposal, i) => (
-            <ProposalRow
-              key={proposal.id}
-              proposal={proposal}
+          {paged.map((agreement, i) => (
+            <AgreementRow
+              key={agreement.id}
+              agreement={agreement}
               index={(safePage - 1) * PAGE_SIZE + i}
             />
           ))}

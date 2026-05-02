@@ -42,9 +42,20 @@ export function UserMenu() {
   }
 
   async function handleSignOut() {
-    await signOut();
-    router.push("/login");
-    router.refresh();
+    try {
+      await signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            // Hard navigation to clear all client state
+            window.location.href = "/login";
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Sign out failed:", error);
+      // Force redirect even if signOut fails
+      window.location.href = "/login";
+    }
   }
 
   const u = user as { name?: string | null; email?: string | null; role?: string | null };

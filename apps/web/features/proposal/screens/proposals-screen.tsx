@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { DashboardTabs } from "@/features/proposal/components/dashboard/dashboard-tabs";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 export function ProposalsScreen() {
+  const { isInvestor, isAdmin, isRepresentative } = useAuth();
+
   return (
     <div className="flex flex-1 flex-col bg-background/50">
       {/* Premium Header */}
@@ -17,28 +22,34 @@ export function ProposalsScreen() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
                 </span>
-                Active Workspace
+                {isAdmin ? "Global Oversight" : "Active Workspace"}
               </div>
               <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-                Proposals
+                {isAdmin ? "All Proposals" : "Proposals"}
               </h1>
               <p className="max-w-2xl text-base text-muted-foreground">
-                Manage your active negotiations, review incoming drafts, and finalize terms to secure farmland agreements globally.
+                {isAdmin
+                  ? "Monitor all lease negotiations and agreements across the entire platform."
+                  : isRepresentative
+                    ? "Review incoming lease drafts and negotiate terms on behalf of your clusters."
+                    : "Manage your active negotiations, review incoming drafts, and finalize terms to secure farmland."}
               </p>
             </div>
             
-            <div className="shrink-0">
-              <Link
-                href="/proposals/new"
-                className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/30"
-              >
-                <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(100%)]">
-                  <div className="relative h-full w-8 bg-white/20" />
-                </div>
-                <Plus className="h-4 w-4" />
-                Draft New Proposal
-              </Link>
-            </div>
+            {isInvestor && (
+              <div className="shrink-0">
+                <Link
+                  href="/proposals/new"
+                  className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/30"
+                >
+                  <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(100%)]">
+                    <div className="relative h-full w-8 bg-white/20" />
+                  </div>
+                  <Plus className="h-4 w-4" />
+                  Draft New Proposal
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

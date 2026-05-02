@@ -69,9 +69,10 @@ export function RegisterClusterForm() {
         formData.set("cropTypes", JSON.stringify(data.cropTypes.split(",").map((s: string) => s.trim())));
       }
 
-      const res = await fetch("/api/clusters", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000"}/api/clusters`, {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to register cluster");
       return res.json();

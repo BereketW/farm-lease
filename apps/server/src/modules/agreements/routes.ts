@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "@farm-lease/db";
 import { AgreementStatus, Prisma, Role } from "@prisma/client";
-import { requireActive, requireSession } from "../../lib/auth";
+import { requireActive, requireRole, requireSession } from "../../lib/auth";
 import { logAudit } from "../../lib/audit";
 import { realtime } from "../../realtime/io";
 import {

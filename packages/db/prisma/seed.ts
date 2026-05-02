@@ -59,7 +59,7 @@ type SeedInvestor = SeedUser & {
 
 const ADMIN: SeedUser = {
   id: "mock-admin-1",
-  email: "admin@farmlease.com",
+  email: "admin1@farmlease.com",
   name: "FarmLease Admin",
   role: Role.ADMIN,
   phone: "+251911000001",

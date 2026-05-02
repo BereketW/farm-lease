@@ -12,14 +12,16 @@ export function getTransport() {
   const pass = process.env.SMTP_PASS;
 
   if (host && user && pass) {
+    const portNum = Number(port);
     transport = nodemailer.createTransport({
       host,
-      port,
-      secure: process.env.SMTP_SECURE === "true",
+      port: portNum,
+      // If secure is not explicitly provided, default to true for port 465
+      secure: process.env.SMTP_SECURE === "true" || portNum === 465,
       auth: { user, pass },
     });
     transportMode = "smtp";
-    console.log(`[auth-mailer] SMTP transport ready: ${host}:${port}`);
+    console.log(`[auth-mailer] SMTP transport ready: ${host}:${portNum}`);
   } else {
     transport = nodemailer.createTransport({ jsonTransport: true });
     transportMode = "json";

@@ -46,7 +46,10 @@ export async function submitProposal(req: Request, res: Response) {
     select: {
       id: true,
       name: true,
-      representatives: { select: { userId: true, isPrimary: true } },
+      representatives: { 
+        where: { isPrimary: true },
+        select: { userId: true } 
+      },
     },
   });
   if (!cluster) return res.status(404).json({ error: "CLUSTER_NOT_FOUND" });
@@ -70,7 +73,7 @@ export async function submitProposal(req: Request, res: Response) {
     },
   });
 
-  const primaryRepId = (cluster.representatives.find((r) => r.isPrimary) ?? cluster.representatives[0])?.userId;
+  const primaryRepId = cluster.representatives[0]?.userId;
   if (primaryRepId) {
     await proposalSubmittedEvent({
       representativeIds: [primaryRepId],
@@ -244,6 +247,11 @@ export async function createRevision(req: Request, res: Response) {
   }
 
   const data = parsed.data;
+  
+  const previousTerms = proposal.terms;
+  const previousBudget = proposal.budget;
+  const previousDuration = proposal.durationMonths;
+
   const updated = await prisma.proposal.update({
     where: { id: proposal.id },
     data: {
@@ -252,6 +260,25 @@ export async function createRevision(req: Request, res: Response) {
       budget: new Prisma.Decimal(data.budget),
       durationMonths: data.durationMonths,
     },
+  });
+
+  logAudit({
+    actorId: actor.id,
+    action: "TERMS_EDITED",
+    targetType: "Proposal",
+    targetId: proposal.id,
+    details: JSON.parse(JSON.stringify({
+      from: {
+        terms: previousTerms,
+        budget: previousBudget,
+        durationMonths: previousDuration,
+      },
+      to: {
+        terms: data.terms,
+        budget: data.budget,
+        durationMonths: data.durationMonths,
+      },
+    })),
   });
 
   const author = await prisma.user.findUnique({
@@ -360,7 +387,8 @@ export async function postMessage(req: Request, res: Response) {
       recipientIds: [recipientId],
       proposalId: proposal.id,
       senderName: message.sender.name ?? "Counterparty",
-      preview: parsed.data.message.slice(0, 140),
+      preview: parsed.data.counterTerms ? "A counter-offer has been proposed." : parsed.data.message.slice(0, 140),
+      isCounterOffer: !!parsed.data.counterTerms,
     });
   }
 
@@ -491,7 +519,10 @@ export async function submitProposalDraft(req: Request, res: Response) {
         select: {
           id: true,
           name: true,
-          representatives: { select: { userId: true, isPrimary: true } },
+          representatives: { 
+            where: { isPrimary: true },
+            select: { userId: true } 
+          },
         },
       },
     },
@@ -535,9 +566,7 @@ export async function submitProposalDraft(req: Request, res: Response) {
     select: { name: true },
   });
 
-  const primaryRepId =
-    (existing.cluster.representatives.find((r) => r.isPrimary) ??
-      existing.cluster.representatives[0])?.userId;
+  const primaryRepId = existing.cluster.representatives[0]?.userId;
   if (primaryRepId) {
     await proposalSubmittedEvent({
       representativeIds: [primaryRepId],

@@ -25,6 +25,7 @@ import { ReceiptUploadDialog } from "@/features/agreement/components/receipt-upl
 import { ReceiptCard } from "@/features/agreement/components/receipt-card";
 import { EditTermsDialog } from "@/features/agreement/components/edit-terms-dialog";
 import type { AgreementStatus } from "@/lib/api/types";
+import { DashboardContent } from "@/components/layout/dashboard-content";
 
 const STATUS_STYLES: Record<AgreementStatus, string> = {
   DRAFT: "bg-zinc-100 text-zinc-700 ring-zinc-200",
@@ -105,7 +106,7 @@ export function AgreementDetailScreen({
     (agreement.status === "DRAFT" || agreement.status === "PENDING_SIGNATURES");
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-8">
+    <DashboardContent>
       <Link
         href="/agreements"
         className="mb-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
@@ -324,7 +325,7 @@ export function AgreementDetailScreen({
         open={editOpen}
         onClose={() => setEditOpen(false)}
       />
-    </div>
+    </DashboardContent>
   );
 }
 

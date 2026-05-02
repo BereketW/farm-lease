@@ -25,6 +25,10 @@ import {
   PaperGrain,
   SectionHeader,
 } from "@/components/editorial";
+import {
+  DashboardContent,
+  DashboardHeaderInner,
+} from "@/components/layout/dashboard-content";
 
 export function ClusterDetailScreen({
   idPromise,
@@ -83,7 +87,7 @@ export function ClusterDetailScreen({
 
       {/* Masthead */}
       <header className="relative border-b border-emerald-950/15 bg-gradient-to-b from-stone-50/90 to-transparent px-6 pb-10 pt-8 dark:border-emerald-400/15 dark:from-stone-950/80 sm:px-10 lg:px-14">
-        <div className="relative mx-auto w-full max-w-[1200px]">
+        <DashboardHeaderInner>
           <Link
             href="/clusters"
             className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-emerald-800/80 transition-colors hover:text-emerald-900 dark:text-emerald-300/80 dark:hover:text-emerald-200"
@@ -129,10 +133,10 @@ export function ClusterDetailScreen({
               ) : null}
             </div>
           ) : null}
-        </div>
+        </DashboardHeaderInner>
       </header>
 
-      <main className="relative mx-auto w-full max-w-[1200px] px-6 py-10 sm:px-10 lg:px-14">
+      <DashboardContent>
         {/* Almanac of metrics */}
         <section>
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-emerald-950/15 bg-emerald-950/10 dark:border-emerald-400/15 dark:bg-emerald-400/10 sm:grid-cols-4">
@@ -312,7 +316,7 @@ export function ClusterDetailScreen({
             </div>
           </section>
         ) : null}
-      </main>
+      </DashboardContent>
     </div>
   );
 }

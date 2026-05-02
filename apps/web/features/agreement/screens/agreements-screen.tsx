@@ -8,6 +8,10 @@ import { cn } from "@farm-lease/ui/lib/utils";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { Masthead, PaperGrain } from "@/components/editorial";
 import { Metric } from "@/components/editorial";
+import {
+  DashboardContent,
+  DashboardHeaderInner,
+} from "@/components/layout/dashboard-content";
 import { AgreementsTable } from "../components/dashboard/agreements-table";
 
 const STATUS_FILTERS: Array<{ id: AgreementStatus | "ALL", label: string }> = [
@@ -65,17 +69,17 @@ export function AgreementsScreen() {
       <PaperGrain />
 
       <header className="relative border-b border-emerald-950/15 bg-gradient-to-b from-stone-50/90 to-transparent px-6 pb-10 pt-10 dark:border-emerald-400/15 dark:from-stone-950/80 sm:px-10 lg:px-14">
-        <div className="relative mx-auto w-full max-w-[1400px]">
+        <DashboardHeaderInner>
           <Masthead
             publication="FarmLease · Agreement Ledger"
             kicker={role.kicker}
             title={role.title}
             lede={lede}
           />
-        </div>
+        </DashboardHeaderInner>
       </header>
 
-      <main className="relative mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-10 lg:px-14">
+      <DashboardContent>
         <div className="space-y-8">
           {/* Almanac / Metrics */}
           <section>
@@ -184,7 +188,7 @@ export function AgreementsScreen() {
 
           <AgreementsTable agreements={visible} isLoading={query.isLoading} />
         </div>
-      </main>
+      </DashboardContent>
     </div>
   );
 }

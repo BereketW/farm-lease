@@ -7,6 +7,7 @@ import { ProposalTerms } from "@/features/proposal/components/detail/proposal-te
 import { NegotiationChat } from "@/features/proposal/components/detail/negotiation-chat";
 import { RevisionForm } from "@/features/proposal/components/detail/revision-form";
 import { DecisionActions } from "@/features/proposal/components/detail/decision-actions";
+import { DashboardContent } from "@/components/layout/dashboard-content";
 
 export function ProposalDetailScreen({
   idPromise,
@@ -44,8 +45,8 @@ export function ProposalDetailScreen({
   const firstMessageId = proposal.messages[0]?.id;
 
   return (
-    <div className="flex flex-1 justify-center bg-linear-to-b from-emerald-50/30 to-white dark:from-zinc-950 dark:to-zinc-950 px-4 py-8">
-      <div className="grid w-full max-w-6xl gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+    <DashboardContent className="bg-linear-to-b from-emerald-50/30 to-white dark:from-zinc-950 dark:to-zinc-950">
+      <div className="grid w-full gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.8fr)]">
         <div className="flex flex-col gap-5">
           <ProposalHero proposal={proposal} />
           <DecisionActions
@@ -70,6 +71,6 @@ export function ProposalDetailScreen({
           />
         </aside>
       </div>
-    </div>
+    </DashboardContent>
   );
 }

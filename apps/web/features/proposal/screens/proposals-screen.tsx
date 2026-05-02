@@ -9,6 +9,10 @@ import {
   Masthead,
   PaperGrain,
 } from "@/components/editorial";
+import {
+  DashboardContent,
+  DashboardHeaderInner,
+} from "@/components/layout/dashboard-content";
 
 export function ProposalsScreen() {
   const { isInvestor, isAdmin, isRepresentative } = useAuth();
@@ -30,7 +34,7 @@ export function ProposalsScreen() {
       <PaperGrain />
 
       <header className="relative border-b border-emerald-950/15 bg-gradient-to-b from-stone-50/90 to-transparent px-6 pb-10 pt-10 dark:border-emerald-400/15 dark:from-stone-950/80 sm:px-10 lg:px-14">
-        <div className="relative mx-auto w-full max-w-[1400px]">
+        <DashboardHeaderInner>
           <Masthead
             publication="FarmLease · Proposal Gazette"
             kicker={role.kicker}
@@ -48,12 +52,12 @@ export function ProposalsScreen() {
               ) : null
             }
           />
-        </div>
+        </DashboardHeaderInner>
       </header>
 
-      <main className="relative mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-10 lg:px-14">
+      <DashboardContent>
         <DashboardTabs />
-      </main>
+      </DashboardContent>
     </div>
   );
 }

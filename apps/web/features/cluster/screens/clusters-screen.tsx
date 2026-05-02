@@ -28,6 +28,10 @@ import {
   NameAvatar,
   PaperGrain,
 } from "@/components/editorial";
+import {
+  DashboardContent,
+  DashboardHeaderInner,
+} from "@/components/layout/dashboard-content";
 import { cn } from "@farm-lease/ui/lib/utils";
 
 const PAGE_SIZE = 12;
@@ -125,7 +129,7 @@ export function ClustersScreen() {
 
       {/* Masthead */}
       <header className="relative border-b border-emerald-950/15 bg-gradient-to-b from-stone-50/90 to-transparent px-6 pb-10 pt-10 dark:border-emerald-400/15 dark:from-stone-950/80 sm:px-10 lg:px-14">
-        <div className="relative mx-auto w-full max-w-[1400px]">
+        <DashboardHeaderInner>
           <Masthead
             publication="FarmLease · Land Registry"
             kicker={role.kicker}
@@ -143,10 +147,10 @@ export function ClustersScreen() {
               ) : null
             }
           />
-        </div>
+        </DashboardHeaderInner>
       </header>
 
-      <main className="relative mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-10 lg:px-14">
+      <DashboardContent>
         {/* Toolbar */}
         <div className="mb-4 flex flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -274,7 +278,7 @@ export function ClustersScreen() {
             />
           </EditorialTable>
         )}
-      </main>
+      </DashboardContent>
     </div>
   );
 }

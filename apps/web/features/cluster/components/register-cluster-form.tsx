@@ -101,7 +101,7 @@ export function RegisterClusterForm() {
           <Input placeholder="Crop Types (comma separated)" {...form.register("cropTypes")} />
           <Textarea placeholder="Geodata (JSON)" {...form.register("geodata")} />
           <Textarea placeholder="Coordinates (JSON)" {...form.register("coordinates")} />
-          <Input type="file" multiple onChange={(e) => form.setValue("documents", e.target.files)} />
+          <Input type="file" multiple onChange={(e) => form.setValue("documents", e.target.files as any)} />
         </CardContent>
       </Card>
 

@@ -29,6 +29,7 @@ export type ClusterSummary = {
   region?: string | null;
   description?: string | null;
   location?: string | null;
+  totalArea?: string | number | null;
   cropTypes?: string[];
   representatives?: ClusterRepLite[];
   _count?: { farmers: number; proposals: number };

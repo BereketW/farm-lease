@@ -1,41 +1,52 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FileSignature, MapPin, Users, Calendar, ArrowUpRight } from "lucide-react";
 import { listAgreements } from "@/features/agreement/datasource/agreements";
 import type { AgreementStatus } from "@/lib/api/types";
 import { cn } from "@farm-lease/ui/lib/utils";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { Masthead, PaperGrain } from "@/components/editorial";
+import { Metric } from "@/components/editorial";
+import { AgreementsTable } from "../components/dashboard/agreements-table";
 
-const STATUS_FILTERS: Array<{ label: string; value: AgreementStatus | "ALL" }> = [
-  { label: "All", value: "ALL" },
-  { label: "Draft", value: "DRAFT" },
-  { label: "Pending Signatures", value: "PENDING_SIGNATURES" },
-  { label: "Active", value: "ACTIVE" },
-  { label: "Completed", value: "COMPLETED" },
-  { label: "Cancelled", value: "CANCELLED" },
+const STATUS_FILTERS: Array<{ id: AgreementStatus | "ALL", label: string }> = [
+  { id: "ALL", label: "All" },
+  { id: "DRAFT", label: "Drafts" },
+  { id: "PENDING_SIGNATURES", label: "Awaiting Signatures" },
+  { id: "ACTIVE", label: "Active" },
+  { id: "COMPLETED", label: "Completed" },
+  { id: "CANCELLED", label: "Cancelled" },
 ];
-
-const STATUS_STYLES: Record<AgreementStatus, string> = {
-  DRAFT: "bg-zinc-100 text-zinc-700 ring-zinc-200",
-  PENDING_SIGNATURES: "bg-amber-50 text-amber-800 ring-amber-200",
-  ACTIVE: "bg-emerald-50 text-emerald-800 ring-emerald-200",
-  COMPLETED: "bg-blue-50 text-blue-800 ring-blue-200",
-  CANCELLED: "bg-rose-50 text-rose-800 ring-rose-200",
-};
 
 export function AgreementsScreen() {
   const [filter, setFilter] = useState<AgreementStatus | "ALL">("ALL");
   const { isAdmin, isRepresentative } = useAuth();
 
   const query = useQuery({
-    queryKey: ["agreements", filter],
-    queryFn: () =>
-      listAgreements(filter === "ALL" ? undefined : { status: filter }),
+    queryKey: ["agreements"],
+    queryFn: () => listAgreements(),
   });
+
+  const agreements = useMemo(
+    () => query.data?.agreements ?? [],
+    [query.data]
+  );
+
+  const visible = useMemo(() => {
+    if (filter === "ALL") return agreements;
+    return agreements.filter((a) => a.status === filter);
+  }, [agreements, filter]);
+
+  const counts = useMemo(() => {
+    const c = { all: agreements.length, pending: 0, active: 0, closed: 0 };
+    for (const a of agreements) {
+      if (a.status === "DRAFT" || a.status === "PENDING_SIGNATURES") c.pending += 1;
+      else if (a.status === "ACTIVE") c.active += 1;
+      else if (a.status === "COMPLETED" || a.status === "CANCELLED") c.closed += 1;
+    }
+    return c;
+  }, [agreements]);
 
   const role = isAdmin
     ? { kicker: "Global oversight", title: "All agreements" }
@@ -65,123 +76,114 @@ export function AgreementsScreen() {
       </header>
 
       <main className="relative mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-10 lg:px-14">
-        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-border/50 bg-muted/30 p-1.5 backdrop-blur-sm w-fit">
-          {STATUS_FILTERS.map((f) => {
-            const active = filter === f.value;
-            return (
-              <button
-                key={f.value}
-                type="button"
-                onClick={() => setFilter(f.value)}
-                className={cn(
-                  "relative rounded-xl px-5 py-2 text-sm font-medium transition-all duration-200 ease-in-out",
-                  active
-                    ? "bg-background text-foreground shadow-sm ring-1 ring-border/50"
-                    : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                )}
+        <div className="space-y-8">
+          {/* Almanac / Metrics */}
+          <section>
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2
+                className="font-serif text-[13px] italic text-emerald-800 dark:text-emerald-300"
+                style={{ fontFamily: "var(--font-fraunces)" }}
               >
-                {f.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {query.isLoading ? (
-          <div className="flex flex-col gap-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-24 animate-pulse rounded-2xl border border-border/50 bg-muted/30"
+                The Almanac
+              </h2>
+              <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-stone-500 dark:text-stone-500">
+                Contract summary
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-emerald-950/10 bg-emerald-950/10 dark:border-emerald-400/10 dark:bg-emerald-400/10 sm:grid-cols-4">
+              <Metric
+                label="All entries"
+                value={counts.all}
+                hint="Total in the ledger"
+                index="i"
+                className="rounded-none border-0"
               />
-            ))}
-          </div>
-        ) : query.error ? (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800">
-            {(query.error as Error).message}
-          </div>
-        ) : !query.data?.agreements.length ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border/50 bg-card/50 px-6 py-12 text-center">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-muted/50 text-muted-foreground ring-1 ring-border/50">
-              <FileSignature className="h-5 w-5" />
-            </span>
-            <p className="text-sm font-medium text-foreground">No agreements found.</p>
-            <p className="text-xs text-muted-foreground">
-              Agreements will appear here once a proposal is accepted.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {query.data.agreements.map((a) => (
-              <Link
-                key={a.id}
-                href={`/agreements/${a.id}`}
-                className="group relative flex flex-col gap-4 sm:flex-row sm:items-center rounded-2xl border border-border/50 bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-300/50 hover:shadow-lg dark:hover:border-emerald-800/50"
-              >
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 opacity-0 transition-opacity duration-300 group-hover:from-emerald-500/5 group-hover:to-transparent group-hover:opacity-100" />
-                
-                <div className="min-w-0 flex-1 relative">
-                  <div className="flex items-center gap-3">
-                    <h3 className="truncate text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
-                      {a.proposal.cluster.name}
-                    </h3>
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ring-1",
-                        STATUS_STYLES[a.status]
-                      )}
-                    >
-                      {a.status.replace("_", " ")}
-                    </span>
-                  </div>
-                  
-                  <div className="mt-2 flex flex-wrap items-center gap-3 truncate text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1.5 font-medium text-foreground/80">
-                      <Users className="size-3.5" />
-                      {a.proposal.investor.name ?? "Investor"}
-                    </span>
-                    <span className="h-1 w-1 rounded-full bg-border" />
-                    {a.proposal.cluster.region ? (
-                      <>
-                        <span className="flex items-center gap-1.5">
-                          <MapPin className="size-3.5" />
-                          {a.proposal.cluster.region}
-                        </span>
-                        <span className="h-1 w-1 rounded-full bg-border" />
-                      </>
-                    ) : null}
-                    <span className="flex items-center gap-1.5">
-                      <Calendar className="size-3.5" />
-                      {new Date(a.startDate).toLocaleDateString()} →{" "}
-                      {new Date(a.endDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex shrink-0 items-center justify-between sm:flex-col sm:items-end sm:justify-center relative">
-                  <div className="text-left sm:text-right">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      Budget
-                    </p>
-                    <p className="mt-1 text-lg font-bold tabular-nums tracking-tight text-foreground">
-                      ETB {Number(a.proposal.budget).toLocaleString()}
-                    </p>
-                    <p className="mt-1 text-[10px] text-muted-foreground">
-                      {a.signatures.length} / 2 signed
-                    </p>
-                  </div>
-                  
-                  <div className="ml-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted/50 transition-colors group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 sm:hidden">
-                    <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
-                  </div>
-                </div>
+              <Metric
+                label="Pending"
+                value={counts.pending}
+                tone="amber"
+                hint="Drafts or awaiting signatures"
+                index="ii"
+                className="rounded-none border-0"
+              />
+              <Metric
+                label="Active"
+                value={counts.active}
+                tone="emerald"
+                hint="Currently active leases"
+                index="iii"
+                className="rounded-none border-0"
+              />
+              <Metric
+                label="Closed"
+                value={counts.closed}
+                tone="default"
+                hint="Completed or cancelled"
+                index="iv"
+                className="rounded-none border-0"
+              />
+            </div>
+          </section>
 
-                <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted/50 transition-colors group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 sm:flex relative">
-                  <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+          {/* Filter: underlined editorial tabs */}
+          <nav
+            className="flex flex-wrap items-end gap-x-6 gap-y-2 border-b border-emerald-950/10 dark:border-emerald-400/10"
+            aria-label="Filter agreements"
+          >
+            {STATUS_FILTERS.map((f) => {
+              const active = filter === f.id;
+              
+              // Compute dynamic counts per tab
+              let tabCount = 0;
+              if (f.id === "ALL") tabCount = counts.all;
+              else if (f.id === "DRAFT" || f.id === "PENDING_SIGNATURES") {
+                 tabCount = agreements.filter(a => a.status === f.id).length;
+              } else if (f.id === "ACTIVE") tabCount = counts.active;
+              else if (f.id === "COMPLETED" || f.id === "CANCELLED") {
+                 tabCount = agreements.filter(a => a.status === f.id).length;
+              }
+
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFilter(f.id)}
+                  className={cn(
+                    "group relative -mb-px flex items-baseline gap-2 border-b-2 pb-3 pt-1 transition-colors",
+                    active
+                      ? "border-emerald-800 dark:border-emerald-300"
+                      : "border-transparent hover:border-emerald-800/30 dark:hover:border-emerald-400/30"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "font-serif text-[15px] italic tracking-tight transition-colors",
+                      active
+                        ? "text-emerald-900 dark:text-emerald-100"
+                        : "text-stone-500 group-hover:text-emerald-900 dark:text-stone-400 dark:group-hover:text-emerald-200"
+                    )}
+                    style={{ fontFamily: "var(--font-fraunces)" }}
+                  >
+                    {f.label}
+                  </span>
+                  <span
+                    className={cn(
+                      "font-mono text-[10px] tabular-nums transition-colors",
+                      active
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : "text-stone-400 dark:text-stone-500"
+                    )}
+                    style={{ fontFamily: "var(--font-geist-mono)" }}
+                  >
+                    {String(tabCount).padStart(2, "0")}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+
+          <AgreementsTable agreements={visible} isLoading={query.isLoading} />
+        </div>
       </main>
     </div>
   );

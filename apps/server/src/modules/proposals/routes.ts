@@ -7,6 +7,7 @@ import {
   decideProposal,
   deleteProposalDraft,
   getProposal,
+  getProposalAuditLogs,
   listMessages,
   listProposals,
   markMessagesRead,
@@ -37,5 +38,6 @@ router.post("/:id/revisions", createRevision);
 router.get("/:id/messages", listMessages);
 router.post("/:id/messages", postMessage);
 router.post("/:id/messages/read", markMessagesRead);
+router.get("/:id/audit-logs", requireRole(Role.ADMIN), getProposalAuditLogs);
 
 export default router;

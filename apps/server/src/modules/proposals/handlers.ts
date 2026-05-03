@@ -143,6 +143,7 @@ export async function getProposal(req: Request, res: Response) {
     id: actor.id,
     isInvestor: proposal.investorId === actor.id,
     isRepresentative: proposal.cluster.representatives.some((r) => r.userId === actor.id),
+    isAdmin: actor.role === Role.ADMIN,
   };
   return res.json({ proposal, viewer });
 }
@@ -465,7 +466,7 @@ export async function updateProposalDraft(req: Request, res: Response) {
     select: { id: true, investorId: true, status: true },
   });
   if (!existing) return res.status(404).json({ error: "NOT_FOUND" });
-  if (existing.investorId !== actor.id && actor.role !== Role.ADMIN) {
+  if (existing.investorId !== actor.id) {
     return res.status(403).json({ error: "FORBIDDEN" });
   }
   if (existing.status !== ProposalStatus.DRAFT) {
@@ -528,7 +529,7 @@ export async function submitProposalDraft(req: Request, res: Response) {
     },
   });
   if (!existing) return res.status(404).json({ error: "NOT_FOUND" });
-  if (existing.investorId !== actor.id && actor.role !== Role.ADMIN) {
+  if (existing.investorId !== actor.id) {
     return res.status(403).json({ error: "FORBIDDEN" });
   }
   if (existing.status !== ProposalStatus.DRAFT) {
@@ -580,7 +581,7 @@ export async function submitProposalDraft(req: Request, res: Response) {
 }
 
 /**
- * Hard-delete a DRAFT proposal. Owner or admin only.
+ * Hard-delete a DRAFT proposal. Owner only.
  */
 export async function deleteProposalDraft(req: Request, res: Response) {
   const actor = req.user!;
@@ -591,7 +592,7 @@ export async function deleteProposalDraft(req: Request, res: Response) {
     select: { id: true, investorId: true, status: true },
   });
   if (!existing) return res.status(404).json({ error: "NOT_FOUND" });
-  if (existing.investorId !== actor.id && actor.role !== Role.ADMIN) {
+  if (existing.investorId !== actor.id) {
     return res.status(403).json({ error: "FORBIDDEN" });
   }
   if (existing.status !== ProposalStatus.DRAFT) {
@@ -649,4 +650,36 @@ export async function markMessagesRead(req: Request, res: Response) {
   });
 
   return res.json({ ids: flippedIds });
+}
+
+/**
+ * Get audit logs for a proposal. Admin-only endpoint for oversight.
+ * Returns audit entries showing state changes, term edits, and negotiations
+ * with before/after diffs.
+ */
+export async function getProposalAuditLogs(req: Request, res: Response) {
+  const actor = req.user!;
+  if (actor.role !== Role.ADMIN) {
+    return res.status(403).json({ error: "ADMIN_ONLY" });
+  }
+
+  const proposal = await prisma.proposal.findUnique({
+    where: { id: req.params.id },
+    select: { id: true },
+  });
+  if (!proposal) return res.status(404).json({ error: "NOT_FOUND" });
+
+  const logs = await prisma.auditLog.findMany({
+    where: {
+      targetType: "Proposal",
+      targetId: proposal.id,
+    },
+    include: {
+      actor: { select: { id: true, name: true, role: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+
+  return res.json({ logs });
 }

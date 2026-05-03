@@ -1,35 +1,47 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { RegisterClusterForm } from "@/features/cluster/components/register-cluster-form";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { DashboardContent } from "@/components/layout/dashboard-content";
 import { Masthead, PaperGrain } from "@/components/editorial";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { RegisterClusterForm } from "../components/register-cluster-form";
 
 export function RegisterClusterScreen() {
-  return (
-    <div className="relative flex flex-1 justify-center bg-stone-50/60 px-4 py-10 dark:bg-stone-950/60 sm:px-8">
-      <PaperGrain />
-      <div className="relative w-full max-w-4xl">
-        <Link
-          href="/clusters"
-          className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-emerald-800/80 transition-colors hover:text-emerald-900 dark:text-emerald-300/80 dark:hover:text-emerald-200"
-        >
-          <ArrowLeft className="h-3 w-3" />
-          Back to the Registry
-        </Link>
+  const router = useRouter();
+  const { isLoading, isAuthed, role } = useAuth();
 
-        <div className="mt-5">
+  const allowed = role === "REPRESENTATIVE" || role === "FARMER";
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!isAuthed) router.replace("/login");
+    else if (!allowed) router.replace("/clusters");
+  }, [isLoading, isAuthed, allowed, router]);
+
+  if (isLoading || !isAuthed || !allowed) {
+    return (
+      <div className="flex flex-1 items-center justify-center bg-stone-50/60 py-24 dark:bg-stone-950/60">
+        <Loader2 className="size-6 animate-spin text-emerald-700" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex flex-1 flex-col bg-stone-50/60 dark:bg-stone-950/60">
+      <PaperGrain />
+      <DashboardContent>
+        <div className="space-y-8">
           <Masthead
-            publication="FarmLease · Land Registry"
-            kicker="A new registration"
+            kicker="Cluster Registry"
             title="Register a cluster"
             italicWord="cluster"
-            lede="Provide the details of your farming cluster — location, crops, and the farmers who tend it — to begin the verification process."
+            lede="Submit a government-recognized farming cluster — its identity, geography, membership, and land documentation — for verification."
           />
-        </div>
-
-        <div className="mt-10">
           <RegisterClusterForm />
         </div>
-      </div>
+      </DashboardContent>
     </div>
   );
 }

@@ -80,6 +80,39 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+// ---------- AVAILABLE FARMERS (for registration picker) ----------
+
+router.get(
+  "/farmers/available",
+  requireRole(Role.FARMER, Role.REPRESENTATIVE, Role.ADMIN),
+  async (req, res, next) => {
+    try {
+      const search =
+        typeof req.query.search === "string" ? req.query.search.trim() : "";
+      const farmers = await prisma.user.findMany({
+        where: {
+          role: Role.FARMER,
+          status: "ACTIVE",
+          ...(search
+            ? {
+                OR: [
+                  { name: { contains: search, mode: "insensitive" } },
+                  { email: { contains: search, mode: "insensitive" } },
+                ],
+              }
+            : {}),
+        },
+        select: { id: true, name: true, email: true },
+        orderBy: { name: "asc" },
+        take: 50,
+      });
+      return res.json({ farmers });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 // ---------- REGISTER CLUSTER ----------
 
 const registerSchema = z.object({

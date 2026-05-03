@@ -15,6 +15,13 @@ export type AgreementStatus =
 
 export type ReceiptStatus = "PENDING" | "VERIFIED" | "REJECTED";
 
+export type ResourceCategory =
+  | "INSURANCE"
+  | "LABOR_UNION"
+  | "WORKER_GROUP"
+  | "EQUIPMENT"
+  | "ADVISORY";
+
 export type Role = "INVESTOR" | "FARMER" | "REPRESENTATIVE" | "ADMIN";
 
 export type ClusterRepLite = {
@@ -81,6 +88,7 @@ export type ProposalViewer = {
   id: string;
   isInvestor: boolean;
   isRepresentative: boolean;
+  isAdmin: boolean;
 };
 
 export type ProposalDetail = ProposalSummary & {
@@ -115,6 +123,23 @@ export type PaymentReceipt = {
   createdAt: string;
   uploader?: { id: string; name: string | null };
   verifiedBy?: { id: string; name: string | null } | null;
+};
+
+export type ResourceSuggestion = {
+  id: string;
+  category: ResourceCategory;
+  title: string;
+  description?: string | null;
+  providerName?: string | null;
+  contactInfo?: Record<string, string> | null;
+  region?: string | null;
+  cropTypes: string[];
+  estimatedCost?: string | null;
+  notes?: string | null;
+  isRecommended: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type AgreementSummary = {
@@ -166,4 +191,35 @@ export type AgreementDetail = Omit<AgreementSummary, "proposal" | "signatures"> 
   clauses: AgreementClause[];
   proposal: ProposalDetail;
   signatures: AgreementSignature[];
+};
+
+export type AuditAction =
+  | "CREATE"
+  | "UPDATE"
+  | "STATE_CHANGE"
+  | "SIGN"
+  | "VERIFY"
+  | "REJECT"
+  | "CANCEL"
+  | "ACTIVATE"
+  | "COMPLETE"
+  | "AGREEMENT_COMPLETED"
+  | "TERMS_EDITED";
+
+export type AuditTargetType = "Proposal" | "Agreement" | "PaymentReceipt" | "User" | "Cluster";
+
+export type AuditLog = {
+  id: string;
+  actorId: string;
+  actor: { id: string; name: string | null; role: Role };
+  action: AuditAction;
+  targetType: AuditTargetType;
+  targetId: string;
+  details?: {
+    from?: Record<string, unknown>;
+    to?: Record<string, unknown>;
+    reason?: string;
+    [key: string]: unknown;
+  } | null;
+  createdAt: string;
 };

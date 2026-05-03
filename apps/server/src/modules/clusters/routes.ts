@@ -115,16 +115,39 @@ router.get(
 
 // ---------- REGISTER CLUSTER ----------
 
+/**
+ * Fields submitted via multipart/form-data arrive as strings, so any
+ * array fields must be JSON-decoded before Zod validates them.
+ */
+const parseJsonArray = (val: unknown) => {
+  if (typeof val !== "string") return val;
+  try {
+    return JSON.parse(val);
+  } catch {
+    return val;
+  }
+};
+
 const registerSchema = z.object({
   name: z.string().min(3).max(200),
   description: z.string().max(2000).optional(),
   location: z.string().min(3),
   region: z.string().min(2),
   totalArea: z.coerce.number().positive(),
-  cropTypes: z.array(z.string()).min(1),
+  cropTypes: z.preprocess(parseJsonArray, z.array(z.string()).min(1)),
   geodata: z.string(), // JSON string
   coordinates: z.string(), // JSON string
-  farmers: z.array(z.object({ userId: z.string(), landShare: z.coerce.number().positive() })).min(1),
+  farmers: z.preprocess(
+    parseJsonArray,
+    z
+      .array(
+        z.object({
+          userId: z.string(),
+          landShare: z.coerce.number().positive(),
+        })
+      )
+      .min(1)
+  ),
 });
 
 router.post(

@@ -6,7 +6,7 @@ import { listAgreements } from "@/features/agreement/datasource/agreements";
 import type { AgreementStatus } from "@/lib/api/types";
 import { cn } from "@farm-lease/ui/lib/utils";
 import { useAuth } from "@/features/auth/hooks/use-auth";
-import { Masthead, PaperGrain } from "@/components/editorial";
+
 import { Metric } from "@/components/editorial";
 import { AgreementsTable } from "../components/dashboard/agreements-table";
 
@@ -60,18 +60,25 @@ export function AgreementsScreen() {
     ? "Manage your active cluster lease contracts and verify offline payment receipts."
     : "Track your active lease agreements, manage signatures, and upload payment receipts.";
 
+  const titleParts = role.title.split(" ");
+  const firstWord = titleParts[0];
+  const restOfTitle = titleParts.slice(1).join(" ");
+
   return (
     <div className="relative flex flex-1 flex-col bg-stone-50/60 dark:bg-stone-950/60">
-      <PaperGrain />
-
-      <header className="relative border-b border-emerald-950/15 bg-gradient-to-b from-stone-50/90 to-transparent px-6 pb-10 pt-10 dark:border-emerald-400/15 dark:from-stone-950/80 sm:px-10 lg:px-14">
-        <div className="relative mx-auto w-full max-w-[1400px]">
-          <Masthead
-            publication="FarmLease · Agreement Ledger"
-            kicker={role.kicker}
-            title={role.title}
-            lede={lede}
-          />
+      <header className="border-b border-emerald-950/15 bg-white px-6 py-8 dark:border-emerald-400/15 dark:bg-stone-950 sm:px-10 lg:px-14">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-stone-950 dark:text-stone-50">
+              {firstWord}{" "}
+              <span className="font-semibold text-emerald-800 dark:text-emerald-300">
+                {restOfTitle}
+              </span>
+            </h1>
+            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+              {lede}
+            </p>
+          </div>
         </div>
       </header>
 

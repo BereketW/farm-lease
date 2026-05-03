@@ -6,7 +6,7 @@ import { listAgreements } from "@/features/agreement/datasource/agreements";
 import type { AgreementStatus } from "@/lib/api/types";
 import { cn } from "@farm-lease/ui/lib/utils";
 import { useAuth } from "@/features/auth/hooks/use-auth";
-import { Masthead, PaperGrain } from "@/components/editorial";
+
 import { Metric } from "@/components/editorial";
 import {
   DashboardContent,
@@ -63,6 +63,10 @@ export function AgreementsScreen() {
     : isRepresentative
     ? "Manage your active cluster lease contracts and verify offline payment receipts."
     : "Track your active lease agreements, manage signatures, and upload payment receipts.";
+
+  const titleParts = role.title.split(" ");
+  const firstWord = titleParts[0];
+  const restOfTitle = titleParts.slice(1).join(" ");
 
   return (
     <div className="relative flex flex-1 flex-col bg-stone-50/60 dark:bg-stone-950/60">

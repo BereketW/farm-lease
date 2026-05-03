@@ -247,6 +247,11 @@ export function ClusterDetailScreen({
             )}
           </div>
         </section>
+      ) : null}
+      </section>
+    </div>
+  );
+}
 
         {/* Farmers ledger */}
         <section className="mt-10">

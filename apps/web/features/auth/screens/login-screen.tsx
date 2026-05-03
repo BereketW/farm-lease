@@ -29,7 +29,7 @@ export function LoginScreen() {
 
   useEffect(() => {
     if (session?.user) {
-      router.replace("/proposals");
+      router.replace("/dashboard");
     }
   }, [session, router]);
 
@@ -42,7 +42,7 @@ export function LoginScreen() {
       if (result.error) {
         setError(result.error.message ?? "Invalid credentials");
       } else {
-        router.push("/proposals");
+        router.push("/dashboard");
         router.refresh();
       }
     } catch {

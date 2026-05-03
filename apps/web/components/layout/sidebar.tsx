@@ -3,20 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  Handshake,
-  LayoutDashboard,
-  Plus,
-  Settings,
-  Users2,
+    ClipboardList,
+    ChevronLeft,
+    ChevronRight,
+    FileText,
+    Handshake,
+    LayoutDashboard,
+    Plus,
+    Settings,
+    Sprout,
+    Users2,
+    BarChart3,
+    BookOpen,
+    CalendarDays,
+    CircleDollarSign,
+    MessageCircle,
+    MessagesSquare,
+ 
   UserCog,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { cn } from "@farm-lease/ui/lib/utils";
 import { useAuth } from "@/features/auth/hooks/use-auth";
-
 type NavItem = {
   href: string;
   icon: ComponentType<{ className?: string }>;
@@ -25,22 +33,41 @@ type NavItem = {
   exact?: boolean;
   adminOnly?: boolean;
 };
-
-const NAV_ITEMS: NavItem[] = [
-  { href: "/", icon: LayoutDashboard, label: "Overview", folio: "i", exact: true },
-  { href: "/clusters", icon: Users2, label: "Clusters", folio: "ii" },
-  { href: "/proposals", icon: FileText, label: "Proposals", folio: "iii" },
-  { href: "/agreements", icon: Handshake, label: "Agreements", folio: "iv" },
+const NAV_ITEMS = [
+    {
+        href: "/dashboard",
+        icon: LayoutDashboard,
+        label: "Dashboard",
+        exact: true,
+    },
+    { href: "/clusters", icon: Users2, label: "Clusters" },
+    { href: "/chat", icon: MessageCircle, label: "Chat" },
+    { href: "/messages", icon: MessagesSquare, label: "Messages" },
+    { href: "/resources", icon: BookOpen, label: "Resources" },
+    { href: "/analytics", icon: BarChart3, label: "Analytics" },
+    { href: "/meetings", icon: CalendarDays, label: "Meetings" },
+    { href: "/payments", icon: CircleDollarSign, label: "Payments" },
+    { href: "/proposals", icon: FileText, label: "Proposals" },
+    { href: "/agreements", icon: Handshake, label: "Agreements" },
   { href: "/admin/users", icon: UserCog, label: "User Admin", folio: "v", adminOnly: true },
-];
+ ]
+  
+
+
+// const NAV_ITEMS: NavItem[] = [
+//   { href: "/", icon: LayoutDashboard, label: "Overview", folio: "i", exact: true },
+//   { href: "/clusters", icon: Users2, label: "Clusters", folio: "ii" },
+//   { href: "/proposals", icon: FileText, label: "Proposals", folio: "iii" },
+//   { href: "/agreements", icon: Handshake, label: "Agreements", folio: "iv" },
+// ];
 
 const FUTURE_ITEMS: Array<{ icon: ComponentType<{ className?: string }>; label: string; folio: string }> = [
   { icon: Settings, label: "Settings", folio: "v" },
 ];
 
 interface SidebarContentProps {
-  collapsed: boolean;
-  onToggle: () => void;
+    collapsed: boolean;
+    onToggle: () => void;
 }
 
 function SidebarContent({ collapsed, onToggle }: SidebarContentProps) {
@@ -339,17 +366,17 @@ function SidebarContent({ collapsed, onToggle }: SidebarContentProps) {
 }
 
 interface SidebarProps {
-  collapsed: boolean;
-  onToggle: () => void;
-  mobileOpen: boolean;
-  onMobileClose: () => void;
+    collapsed: boolean;
+    onToggle: () => void;
+    mobileOpen: boolean;
+    onMobileClose: () => void;
 }
 
 export function Sidebar({
-  collapsed,
-  onToggle,
-  mobileOpen,
-  onMobileClose,
+    collapsed,
+    onToggle,
+    mobileOpen,
+    onMobileClose,
 }: SidebarProps) {
   return (
     <>

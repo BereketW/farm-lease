@@ -123,6 +123,10 @@ export function ClustersScreen() {
     ? "Manage the clusters you represent — update boundaries, track farmer membership, and respond to incoming proposals."
     : "Browse government-verified farmer clusters — each one a parcel of stewarded land awaiting a lease partner.";
 
+  const titleParts = role.title.split(" ");
+  const firstWord = titleParts[0];
+  const restOfTitle = titleParts.slice(1).join(" ");
+
   return (
     <div className="relative flex flex-1 flex-col bg-stone-50/60 dark:bg-stone-950/60">
       <PaperGrain />

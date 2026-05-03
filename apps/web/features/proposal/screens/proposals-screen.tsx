@@ -29,6 +29,10 @@ export function ProposalsScreen() {
     ? "Review incoming lease drafts and negotiate terms on behalf of the clusters you represent."
     : "Active negotiations, incoming drafts, and finalised terms — everything you've set in motion.";
 
+  const titleParts = role.title.split(" ");
+  const firstWord = titleParts[0];
+  const restOfTitle = titleParts.slice(1).join(" ");
+
   return (
     <div className="relative flex flex-1 flex-col bg-stone-50/60 dark:bg-stone-950/60">
       <PaperGrain />

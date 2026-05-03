@@ -113,6 +113,32 @@ const STEPS: { key: StepKey; label: string; icon: React.ReactNode }[] = [
 ];
 
 // ============================================================
+// Utilities
+// ============================================================
+
+/**
+ * Approximate a circular boundary (centered on `lat`/`lng`) that encloses
+ * `areaHa` hectares as a 32-sided GeoJSON Polygon. Used as a fallback when
+ * the representative does not explicitly draw a polygon.
+ */
+function circlePolygon(lat: number, lng: number, areaHa: number): BoundaryPolygon {
+  const N = 32;
+  const EARTH_R = 6_371_000; // meters
+  const radiusM = Math.sqrt((areaHa * 10_000) / Math.PI);
+  const dLatPerM = (1 / EARTH_R) * (180 / Math.PI);
+  const dLngPerM = dLatPerM / Math.cos((lat * Math.PI) / 180);
+  const ring: [number, number][] = [];
+  for (let i = 0; i < N; i++) {
+    const angle = (i / N) * 2 * Math.PI;
+    const dLat = radiusM * Math.cos(angle) * dLatPerM;
+    const dLng = radiusM * Math.sin(angle) * dLngPerM;
+    ring.push([lng + dLng, lat + dLat]);
+  }
+  ring.push(ring[0]);
+  return { type: "Polygon", coordinates: [ring] };
+}
+
+// ============================================================
 // Form
 // ============================================================
 
@@ -161,14 +187,37 @@ export function RegisterClusterForm() {
     return { type: "Point" as const, coordinates: [lng, lat] };
   }, [latitude, longitude]);
 
-  const geodata = useMemo(() => {
+  /**
+   * Explicit polygon the user drew / pasted — for UI display only.
+   * Returns "INVALID" when user provided text but it's not valid JSON.
+   */
+  const drawnPolygon = useMemo(() => {
     if (!boundariesJson.trim()) return null;
     try {
-      return JSON.parse(boundariesJson);
+      const parsed = JSON.parse(boundariesJson);
+      if (parsed?.type === "Polygon" && Array.isArray(parsed.coordinates)) {
+        return parsed as BoundaryPolygon;
+      }
+      return "INVALID" as const;
     } catch {
-      return "INVALID";
+      return "INVALID" as const;
     }
   }, [boundariesJson]);
+
+  /**
+   * Geodata payload sent to the server. Falls back to a 32-sided
+   * circle-polygon derived from the centroid + total area when the
+   * representative does not draw a boundary explicitly.
+   */
+  const submissionGeodata = useMemo(() => {
+    if (drawnPolygon === "INVALID") return "INVALID" as const;
+    if (drawnPolygon) return drawnPolygon;
+    if (coordinates && Number(totalArea) > 0) {
+      const [lng, lat] = coordinates.coordinates as [number, number];
+      return circlePolygon(lat, lng, Number(totalArea));
+    }
+    return null;
+  }, [drawnPolygon, coordinates, totalArea]);
 
   const totalShare = useMemo(
     () =>
@@ -187,8 +236,10 @@ export function RegisterClusterForm() {
     else if (!region) e.identity = "Select a region";
 
     if (!coordinates) e.geo = "Provide centroid coordinates";
-    else if (geodata === "INVALID") e.geo = "Boundary GeoJSON is malformed";
+    else if (drawnPolygon === "INVALID") e.geo = "Boundary GeoJSON is malformed";
     else if (!totalArea || Number(totalArea) <= 0) e.geo = "Set the total area in hectares";
+    else if (!submissionGeodata || submissionGeodata === "INVALID")
+      e.geo = "Provide a boundary or total area to derive one";
     else if (cropTypes.length === 0) e.geo = "Pick at least one crop type";
 
     if (farmers.length === 0) e.farmers = "Add at least one farmer";
@@ -198,7 +249,18 @@ export function RegisterClusterForm() {
     if (docs.length === 0) e.documents = "Upload land documentation";
 
     return e;
-  }, [name, location, region, coordinates, geodata, totalArea, cropTypes, farmers, docs]);
+  }, [
+    name,
+    location,
+    region,
+    coordinates,
+    drawnPolygon,
+    submissionGeodata,
+    totalArea,
+    cropTypes,
+    farmers,
+    docs,
+  ]);
 
   const isStepValid = (k: StepKey) => !errors[k];
   const allValid = STEPS.slice(0, -1).every((s) => isStepValid(s.key));
@@ -206,7 +268,11 @@ export function RegisterClusterForm() {
   // ---- Mutation ----
   const submit = useMutation({
     mutationFn: () => {
-      if (!coordinates || !geodata || geodata === "INVALID") {
+      if (
+        !coordinates ||
+        !submissionGeodata ||
+        submissionGeodata === "INVALID"
+      ) {
         throw new Error("Geo data missing");
       }
       return registerCluster({
@@ -217,7 +283,7 @@ export function RegisterClusterForm() {
         totalArea: Number(totalArea),
         cropTypes,
         coordinates: JSON.stringify(coordinates),
-        geodata: JSON.stringify(geodata),
+        geodata: JSON.stringify(submissionGeodata),
         farmers: farmers.map((f) => ({
           userId: f.userId,
           landShare: Number(f.landShare),
@@ -287,7 +353,7 @@ export function RegisterClusterForm() {
             setLongitude={setLongitude}
             boundariesJson={boundariesJson}
             setBoundariesJson={setBoundariesJson}
-            geodataValid={geodata !== "INVALID"}
+            geodataValid={drawnPolygon !== "INVALID"}
             totalArea={totalArea}
             setTotalArea={setTotalArea}
             cropTypes={cropTypes}
@@ -749,8 +815,8 @@ function GeographySection({
             optional
             hint={
               boundariesJson && !geodataValid
-                ? "JSON parse failed — paste a valid GeoJSON Polygon or FeatureCollection."
-                : "Paste a GeoJSON polygon outlining the cluster boundary."
+                ? "JSON parse failed — paste a valid GeoJSON Polygon."
+                : "Optional. If omitted, a circular boundary is derived from the centroid and total area."
             }
             error={boundariesJson && !geodataValid ? "Invalid GeoJSON" : undefined}
           >

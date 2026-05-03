@@ -54,26 +54,50 @@ export function ClusterDetailScreen({
     cluster.representatives?.[0];
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-8">
-      <Link
-        href="/clusters"
-        className="mb-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-3.5" />
-        Back to clusters
-      </Link>
+    <div className="relative flex flex-1 flex-col bg-stone-50/60 dark:bg-stone-950/60">
+      <header className="border-b border-emerald-950/15 bg-white px-6 py-8 dark:border-emerald-400/15 dark:bg-stone-950 sm:px-10 lg:px-14">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <Link
+              href="/clusters"
+              className="mb-3 inline-flex items-center gap-1.5 text-xs text-stone-500 transition hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200"
+            >
+              <ArrowLeft className="size-3.5" />
+              Back to clusters
+            </Link>
+            <h1 className="text-3xl font-bold tracking-tight text-stone-950 dark:text-stone-50">
+              {cluster.name.split(" ")[0]}{" "}
+              <span className="font-semibold text-emerald-800 dark:text-emerald-300">
+                {cluster.name.split(" ").slice(1).join(" ") || "Detail"}
+              </span>
+            </h1>
+            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+              {cluster.description ?? `A verified farmer cluster${cluster.region ? ` in ${cluster.region}` : ""}.`}
+            </p>
+          </div>
+          {isInvestor ? (
+            <div className="shrink-0">
+              <Link
+                href={`/proposals/new?clusterId=${cluster.id}`}
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-900 dark:bg-emerald-700 dark:hover:bg-emerald-600"
+              >
+                <Plus className="size-4" />
+                Submit proposal
+              </Link>
+            </div>
+          ) : null}
+        </div>
+      </header>
 
-      {/* Hero */}
-      <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border bg-gradient-to-br from-emerald-50 to-white p-6 dark:from-emerald-950/20 dark:to-transparent">
+      {/* Hero metrics */}
+      <section className="mx-auto w-full max-w-5xl px-6 py-8 sm:px-10">
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="flex flex-wrap items-start gap-4 border-b border-border bg-gradient-to-br from-emerald-50 to-white p-6 dark:from-emerald-950/20 dark:to-transparent">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-700">
               <Sprout className="size-3.5" />
               Farmer cluster
             </div>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
-              {cluster.name}
-            </h1>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
               {cluster.location ? (
                 <span className="inline-flex items-center gap-1">
@@ -87,22 +111,7 @@ export function ClusterDetailScreen({
                 </span>
               ) : null}
             </div>
-            {cluster.description ? (
-              <p className="mt-3 max-w-2xl text-sm text-foreground/80">
-                {cluster.description}
-              </p>
-            ) : null}
           </div>
-
-          {isInvestor ? (
-            <Link
-              href={`/proposals/new?clusterId=${cluster.id}`}
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-            >
-              <Plus className="size-3.5" />
-              Submit proposal
-            </Link>
-          ) : null}
         </div>
 
         <div className="grid grid-cols-2 gap-3 p-6 sm:grid-cols-4">
@@ -123,7 +132,7 @@ export function ClusterDetailScreen({
             icon={MapPin}
           />
         </div>
-      </section>
+      </div>
 
       {/* Primary representative spotlight */}
       {primaryRep?.user ? (
@@ -189,6 +198,7 @@ export function ClusterDetailScreen({
           </p>
         </section>
       ) : null}
+      </section>
     </div>
   );
 }

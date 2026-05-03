@@ -1,5 +1,5 @@
 import { PrismaClient, Role, UserStatus } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { hashPassword } from 'better-auth/crypto';
 
 const prisma = new PrismaClient();
 
@@ -28,14 +28,24 @@ async function main() {
     },
   });
 
-  if (!existingAccount) {
-    const password = await bcrypt.hash('admin123', 10);
+  // Always upsert the credential account so any stale hash gets replaced.
+  // Better Auth's hashPassword uses scrypt — the same algorithm it uses to
+  // verify passwords at sign-in, so this hash is fully compatible out of the box.
+  const devPassword = process.env.DEV_ADMIN_PASSWORD ?? 'admin123';
+  const passwordHash = await hashPassword(devPassword);
+
+  if (existingAccount) {
+    await prisma.account.update({
+      where: { id: existingAccount.id },
+      data: { password: passwordHash },
+    });
+  } else {
     await prisma.account.create({
       data: {
         accountId: admin.id,
         providerId: 'credential',
         userId: admin.id,
-        password,
+        password: passwordHash,
       },
     });
   }

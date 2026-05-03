@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import {
   AlertCircle,
@@ -12,7 +13,9 @@ import {
   ChevronRight,
   FileText,
   Loader2,
+  Map as MapIcon,
   MapPin,
+  Pencil,
   Plus,
   Search,
   Send,
@@ -21,6 +24,23 @@ import {
   Users,
   X,
 } from "lucide-react";
+import type { BoundaryPolygon } from "@/features/cluster/components/map-picker";
+
+// Client-only map picker (Leaflet accesses `window`).
+const MapPicker = dynamic(
+  () =>
+    import("@/features/cluster/components/map-picker").then(
+      (mod) => mod.MapPicker
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="grid h-[340px] w-full place-items-center rounded-sm border border-emerald-950/15 bg-stone-100 dark:border-emerald-400/15 dark:bg-stone-900">
+        <Loader2 className="h-5 w-5 animate-spin text-emerald-700" />
+      </div>
+    ),
+  }
+);
 import { cn } from "@farm-lease/ui/lib/utils";
 import {
   EditorialButton,
@@ -575,6 +595,8 @@ function GeographySection({
   setCropDraft: (v: string) => void;
   error?: string;
 }) {
+  const [inputMode, setInputMode] = useState<"map" | "manual">("map");
+
   const addCrop = (raw: string) => {
     const v = raw.trim();
     if (!v) return;
@@ -583,6 +605,28 @@ function GeographySection({
     setCropDraft("");
   };
 
+  // Parse current lat/lng into a centroid for the map
+  const centroid = useMemo(() => {
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+    if (!latitude || !longitude || Number.isNaN(lat) || Number.isNaN(lng)) return null;
+    return { lat, lng };
+  }, [latitude, longitude]);
+
+  // Parse current boundary JSON into a polygon for the map
+  const boundary: BoundaryPolygon | null = useMemo(() => {
+    if (!boundariesJson.trim()) return null;
+    try {
+      const parsed = JSON.parse(boundariesJson);
+      if (parsed?.type === "Polygon" && Array.isArray(parsed.coordinates)) {
+        return parsed as BoundaryPolygon;
+      }
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }, [boundariesJson]);
+
   return (
     <SectionShell
       eyebrow="Section ii"
@@ -590,61 +634,128 @@ function GeographySection({
       lede="Coordinates, boundaries, and the land you steward."
       error={error}
     >
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <EditorialField id="cl-lat" label="Latitude" hint="Decimal degrees, e.g. 8.9806">
-          <EditorialInput
-            id="cl-lat"
-            type="number"
-            step="any"
-            value={latitude}
-            onChange={(e) => setLatitude(e.target.value)}
-            placeholder="8.9806"
-          />
-        </EditorialField>
-        <EditorialField id="cl-lng" label="Longitude" hint="Decimal degrees, e.g. 38.7578">
-          <EditorialInput
-            id="cl-lng"
-            type="number"
-            step="any"
-            value={longitude}
-            onChange={(e) => setLongitude(e.target.value)}
-            placeholder="38.7578"
-          />
-        </EditorialField>
-        <EditorialField id="cl-area" label="Total area (ha)" hint="Hectares under cultivation">
-          <EditorialInput
-            id="cl-area"
-            type="number"
-            min={0}
-            step="0.01"
-            value={totalArea}
-            onChange={(e) => setTotalArea(e.target.value)}
-            placeholder="120.5"
-          />
-        </EditorialField>
+      {/* Input mode toggle */}
+      <div
+        role="tablist"
+        aria-label="Coordinate input mode"
+        className="inline-flex items-center overflow-hidden rounded-sm border border-emerald-950/15 bg-stone-50/60 dark:border-emerald-400/15 dark:bg-stone-900/40"
+      >
+        <InputModeButton
+          active={inputMode === "map"}
+          onClick={() => setInputMode("map")}
+          icon={<MapIcon className="h-3 w-3" />}
+          label="Map picker"
+        />
+        <InputModeButton
+          active={inputMode === "manual"}
+          onClick={() => setInputMode("manual")}
+          icon={<Pencil className="h-3 w-3" />}
+          label="Manual entry"
+        />
       </div>
 
-      <EditorialField
-        id="cl-geojson"
-        label="Boundary (GeoJSON)"
-        optional
-        hint={
-          boundariesJson && !geodataValid
-            ? "JSON parse failed — paste a valid GeoJSON Polygon or FeatureCollection."
-            : "Paste a GeoJSON polygon outlining the cluster boundary."
-        }
-        error={boundariesJson && !geodataValid ? "Invalid GeoJSON" : undefined}
-      >
-        <EditorialTextarea
-          id="cl-geojson"
-          rows={4}
-          value={boundariesJson}
-          onChange={(e) => setBoundariesJson(e.target.value)}
-          placeholder={`{ "type": "Polygon", "coordinates": [[[38.75, 8.98], …]] }`}
-          invalid={!!boundariesJson && !geodataValid}
-          className="font-mono text-[12px]"
-        />
-      </EditorialField>
+      {inputMode === "map" ? (
+        <div className="space-y-3">
+          <MapPicker
+            centroid={centroid}
+            boundary={boundary}
+            onCentroidChange={(lat, lng) => {
+              setLatitude(lat.toFixed(6));
+              setLongitude(lng.toFixed(6));
+            }}
+            onBoundaryChange={(polygon) => {
+              setBoundariesJson(polygon ? JSON.stringify(polygon) : "");
+            }}
+          />
+          {/* Read-only readouts */}
+          <div className="grid grid-cols-2 gap-4 rounded-sm border border-emerald-950/10 bg-white/60 px-4 py-3 text-[11px] dark:border-emerald-400/10 dark:bg-stone-900/40 sm:grid-cols-4">
+            <Readout label="Latitude" value={latitude || "—"} mono />
+            <Readout label="Longitude" value={longitude || "—"} mono />
+            <Readout
+              label="Boundary"
+              value={boundary ? `${boundary.coordinates[0].length - 1} pts` : "—"}
+            />
+            <Readout
+              label="Status"
+              value={centroid ? "Ready" : "Set centroid"}
+              tone={centroid ? "emerald" : "stone"}
+            />
+          </div>
+          <EditorialField
+            id="cl-area-map"
+            label="Total area (ha)"
+            hint="Hectares under cultivation"
+          >
+            <EditorialInput
+              id="cl-area-map"
+              type="number"
+              min={0}
+              step="0.01"
+              value={totalArea}
+              onChange={(e) => setTotalArea(e.target.value)}
+              placeholder="120.5"
+            />
+          </EditorialField>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <EditorialField id="cl-lat" label="Latitude" hint="Decimal degrees, e.g. 8.9806">
+              <EditorialInput
+                id="cl-lat"
+                type="number"
+                step="any"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
+                placeholder="8.9806"
+              />
+            </EditorialField>
+            <EditorialField id="cl-lng" label="Longitude" hint="Decimal degrees, e.g. 38.7578">
+              <EditorialInput
+                id="cl-lng"
+                type="number"
+                step="any"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
+                placeholder="38.7578"
+              />
+            </EditorialField>
+            <EditorialField id="cl-area" label="Total area (ha)" hint="Hectares under cultivation">
+              <EditorialInput
+                id="cl-area"
+                type="number"
+                min={0}
+                step="0.01"
+                value={totalArea}
+                onChange={(e) => setTotalArea(e.target.value)}
+                placeholder="120.5"
+              />
+            </EditorialField>
+          </div>
+
+          <EditorialField
+            id="cl-geojson"
+            label="Boundary (GeoJSON)"
+            optional
+            hint={
+              boundariesJson && !geodataValid
+                ? "JSON parse failed — paste a valid GeoJSON Polygon or FeatureCollection."
+                : "Paste a GeoJSON polygon outlining the cluster boundary."
+            }
+            error={boundariesJson && !geodataValid ? "Invalid GeoJSON" : undefined}
+          >
+            <EditorialTextarea
+              id="cl-geojson"
+              rows={4}
+              value={boundariesJson}
+              onChange={(e) => setBoundariesJson(e.target.value)}
+              placeholder={`{ "type": "Polygon", "coordinates": [[[38.75, 8.98], …]] }`}
+              invalid={!!boundariesJson && !geodataValid}
+              className="font-mono text-[12px]"
+            />
+          </EditorialField>
+        </>
+      )}
 
       <div>
         <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-stone-600 dark:text-stone-400">
@@ -1247,6 +1358,72 @@ function ReviewBlock({
           </div>
         ))}
       </dl>
+    </div>
+  );
+}
+
+// ============================================================
+// Geography helpers
+// ============================================================
+
+function InputModeButton({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.22em] transition-colors",
+        active
+          ? "bg-emerald-900 text-stone-50 dark:bg-emerald-300 dark:text-emerald-950"
+          : "text-stone-600 hover:bg-stone-100/70 dark:text-stone-400 dark:hover:bg-stone-800/50"
+      )}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function Readout({
+  label,
+  value,
+  mono,
+  tone = "stone",
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  tone?: "stone" | "emerald";
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[9px] font-medium uppercase tracking-[0.22em] text-stone-500">
+        {label}
+      </span>
+      <span
+        className={cn(
+          "text-[12px]",
+          mono && "font-mono tabular-nums",
+          tone === "emerald"
+            ? "text-emerald-800 dark:text-emerald-300"
+            : "text-stone-800 dark:text-stone-200"
+        )}
+        style={mono ? { fontFamily: "var(--font-geist-mono)" } : undefined}
+      >
+        {value}
+      </span>
     </div>
   );
 }

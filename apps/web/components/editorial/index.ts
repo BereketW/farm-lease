@@ -16,3 +16,4 @@ export {
   EditorialPagination,
 } from "./table";
 export { EditorialSearch, EditorialToggle, EditorialSelect } from "./toolbar";
+export { usePagination } from "./use-pagination";

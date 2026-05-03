@@ -11,6 +11,7 @@ import {
   EditorialPagination,
   EditorialSearch,
   EditorialTable,
+  usePagination,
 } from "@/components/editorial";
 
 const PAGE_SIZE = 12;
@@ -23,7 +24,6 @@ type Props = {
 
 export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -40,17 +40,13 @@ export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
     });
   }, [proposals, search]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, pageCount);
-  const paged = useMemo(
-    () => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
-    [filtered, safePage],
-  );
-
-  const handleSearch = (v: string) => {
-    setSearch(v);
-    setPage(1);
-  };
+  const {
+    items: paged,
+    page: safePage,
+    pageCount,
+    setPage,
+    indexOffset,
+  } = usePagination(filtered, PAGE_SIZE);
 
   /* ── loading ── */
   if (isLoading) {
@@ -100,7 +96,7 @@ export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <EditorialSearch
           value={search}
-          onChange={handleSearch}
+          onChange={setSearch}
           placeholder="Search by title, cluster, investor, crop…"
           className="w-full sm:max-w-md"
         />
@@ -131,7 +127,7 @@ export function ProposalsTable({ proposals, isLoading, emptyHint }: Props) {
             <ProposalRow
               key={proposal.id}
               proposal={proposal}
-              index={(safePage - 1) * PAGE_SIZE + i}
+              index={indexOffset + i}
             />
           ))}
           <EditorialPagination

@@ -7,7 +7,7 @@ import type { AgreementStatus } from "@/lib/api/types";
 import { cn } from "@farm-lease/ui/lib/utils";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 
-import { Metric } from "@/components/editorial";
+import { Masthead, Metric, PaperGrain } from "@/components/editorial";
 import {
   DashboardContent,
   DashboardHeaderInner,

@@ -659,6 +659,7 @@ function GeographySection({
           <MapPicker
             centroid={centroid}
             boundary={boundary}
+            areaHectares={Number(totalArea) > 0 ? Number(totalArea) : null}
             onCentroidChange={(lat, lng) => {
               setLatitude(lat.toFixed(6));
               setLongitude(lng.toFixed(6));
@@ -668,12 +669,21 @@ function GeographySection({
             }}
           />
           {/* Read-only readouts */}
-          <div className="grid grid-cols-2 gap-4 rounded-sm border border-emerald-950/10 bg-white/60 px-4 py-3 text-[11px] dark:border-emerald-400/10 dark:bg-stone-900/40 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 rounded-sm border border-emerald-950/10 bg-white/60 px-4 py-3 text-[11px] dark:border-emerald-400/10 dark:bg-stone-900/40 sm:grid-cols-5">
             <Readout label="Latitude" value={latitude || "—"} mono />
             <Readout label="Longitude" value={longitude || "—"} mono />
             <Readout
               label="Boundary"
               value={boundary ? `${boundary.coordinates[0].length - 1} pts` : "—"}
+            />
+            <Readout
+              label="Radius"
+              value={
+                Number(totalArea) > 0
+                  ? `${Math.sqrt((Number(totalArea) * 10_000) / Math.PI).toFixed(0)} m`
+                  : "—"
+              }
+              mono
             />
             <Readout
               label="Status"

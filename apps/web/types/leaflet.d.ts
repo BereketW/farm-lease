@@ -44,6 +44,12 @@ declare module "leaflet" {
     setLatLng(latlng: LatLngExpression): this;
   }
 
+  export interface Circle extends Layer {
+    setLatLng(latlng: LatLngExpression): this;
+    setRadius(radius: number): this;
+    getBounds(): LatLngExpression[];
+  }
+
   export interface PathOptions {
     color?: string;
     weight?: number;
@@ -81,6 +87,10 @@ declare module "leaflet" {
       options?: { icon?: unknown; draggable?: boolean }
     ): Marker;
     circleMarker(latlng: LatLngExpression, options?: PathOptions): CircleMarker;
+    circle(
+      latlng: LatLngExpression,
+      options?: PathOptions & { radius: number }
+    ): Circle;
     polygon(latlngs: LatLngExpression[], options?: PathOptions): Polygon;
     polyline(latlngs: LatLngExpression[], options?: PathOptions): Polyline;
     divIcon(options: DivIconOptions): unknown;

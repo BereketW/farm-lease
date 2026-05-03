@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Crosshair, PenLine, RotateCcw, Check, MapPin } from "lucide-react";
 import type {
+  Circle,
   CircleMarker,
   LatLng,
   LeafletMouseEvent,
@@ -37,12 +38,15 @@ export type BoundaryPolygon = {
 export function MapPicker({
   centroid,
   boundary,
+  areaHectares,
   onCentroidChange,
   onBoundaryChange,
   className,
 }: {
   centroid: { lat: number; lng: number } | null;
   boundary: BoundaryPolygon | null;
+  /** If provided, renders an equivalent-radius circle around the centroid. */
+  areaHectares?: number | null;
   onCentroidChange: (lat: number, lng: number) => void;
   onBoundaryChange: (polygon: BoundaryPolygon | null) => void;
   className?: string;
@@ -51,6 +55,7 @@ export function MapPicker({
   const mapRef = useRef<LMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
   const polygonRef = useRef<Polygon | null>(null);
+  const radiusRef = useRef<Circle | null>(null);
   const drafts = useRef<{
     vertices: [number, number][];
     dots: CircleMarker[];
@@ -162,6 +167,40 @@ export function MapPicker({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, ready]);
+
+  // ---- Sync equivalent-area radius circle ----
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletRef.current;
+    if (!map || !L || !ready) return;
+
+    const radiusMeters =
+      centroid && areaHectares && areaHectares > 0
+        ? Math.sqrt((areaHectares * 10_000) / Math.PI)
+        : 0;
+
+    if (radiusMeters <= 0) {
+      if (radiusRef.current) {
+        radiusRef.current.remove();
+        radiusRef.current = null;
+      }
+      return;
+    }
+
+    if (radiusRef.current) {
+      radiusRef.current.setLatLng([centroid!.lat, centroid!.lng]);
+      radiusRef.current.setRadius(radiusMeters);
+    } else {
+      radiusRef.current = L.circle([centroid!.lat, centroid!.lng], {
+        radius: radiusMeters,
+        color: "#047857",
+        weight: 1.5,
+        dashArray: "4 4",
+        fillColor: "#10b981",
+        fillOpacity: 0.08,
+      }).addTo(map);
+    }
+  }, [centroid, areaHectares, ready]);
 
   // ---- Helpers ----
 

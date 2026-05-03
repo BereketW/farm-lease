@@ -1,5 +1,7 @@
 "use client";
 
+import { ScrollText } from "lucide-react";
+import { HorizonRule, SectionHeader } from "@/components/editorial";
 import type { ProposalDetail } from "@/lib/api/types";
 
 export function ProposalTerms({ proposal }: { proposal: ProposalDetail }) {
@@ -7,25 +9,47 @@ export function ProposalTerms({ proposal }: { proposal: ProposalDetail }) {
   if (entries.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-emerald-100 bg-white shadow-sm">
-      <header className="border-b border-emerald-100 px-5 py-3">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
-          Lease terms
-        </p>
-        <h2 className="text-sm font-semibold text-emerald-950">Negotiated conditions</h2>
-      </header>
-      <dl className="grid grid-cols-1 gap-x-6 gap-y-3 px-5 py-4 text-sm sm:grid-cols-2">
-        {entries.map(([key, value]) => (
-          <div key={key} className="border-b border-dashed border-zinc-100 pb-2 last:border-0">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
-              {humanize(key)}
-            </dt>
-            <dd className="mt-0.5 whitespace-pre-wrap text-zinc-900">
-              {renderValue(value)}
-            </dd>
-          </div>
-        ))}
-      </dl>
+    <section>
+      <SectionHeader
+        title="Negotiated conditions"
+        eyebrow="Lease terms"
+        meta={`Nº ${String(entries.length).padStart(2, "0")} clauses`}
+      />
+      <div className="mt-3 overflow-hidden rounded-sm border border-emerald-950/15 bg-white/80 dark:border-emerald-400/15 dark:bg-stone-900/60">
+        <header className="flex items-center gap-2 border-b border-emerald-950/10 bg-emerald-50/40 px-5 py-3 dark:border-emerald-400/10 dark:bg-emerald-950/20">
+          <ScrollText className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-300" />
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-800 dark:text-emerald-300">
+            The Covenant
+          </p>
+        </header>
+        <dl className="grid grid-cols-1 gap-x-8 gap-y-4 px-6 py-5 text-sm sm:grid-cols-2">
+          {entries.map(([key, value], idx) => (
+            <div
+              key={key}
+              className="border-b border-dashed border-emerald-950/10 pb-3 last:border-0 dark:border-emerald-400/10"
+            >
+              <div className="flex items-baseline gap-2">
+                <span
+                  className="font-serif text-[10px] italic tabular-nums text-emerald-700/60 dark:text-emerald-400/60"
+                  style={{ fontFamily: "var(--font-fraunces)" }}
+                >
+                  {String(idx + 1).padStart(2, "0")}
+                </span>
+                <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-800/80 dark:text-emerald-300/80">
+                  {humanize(key)}
+                </dt>
+              </div>
+              <dd
+                className="mt-1.5 whitespace-pre-wrap font-serif text-sm leading-relaxed text-stone-800 dark:text-stone-200"
+                style={{ fontFamily: "var(--font-fraunces)" }}
+              >
+                {renderValue(value)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <HorizonRule className="mx-6 mb-4" />
+      </div>
     </section>
   );
 }

@@ -2,8 +2,12 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, Undo2, X } from "lucide-react";
-import { decideProposal, withdrawProposal } from "@/features/proposal/datasource/proposals";
+import { Check, Gavel, Loader2, Undo2, X } from "lucide-react";
+import { cn } from "@farm-lease/ui/lib/utils";
+import {
+  decideProposal,
+  withdrawProposal,
+} from "@/features/proposal/datasource/proposals";
 import type { ProposalDetail } from "@/lib/api/types";
 import { proposalDetailKey } from "../../hooks/use-proposal-detail";
 
@@ -13,7 +17,11 @@ type Props = {
   isRepresentative: boolean;
 };
 
-export function DecisionActions({ proposal, isInvestor, isRepresentative }: Props) {
+export function DecisionActions({
+  proposal,
+  isInvestor,
+  isRepresentative,
+}: Props) {
   const queryClient = useQueryClient();
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: proposalDetailKey(proposal.id) });
@@ -22,7 +30,9 @@ export function DecisionActions({ proposal, isInvestor, isRepresentative }: Prop
     mutationFn: (decision: "ACCEPT" | "REJECT") =>
       decideProposal(proposal.id, decision),
     onSuccess: (_, decision) => {
-      toast.success(decision === "ACCEPT" ? "Proposal accepted" : "Proposal rejected");
+      toast.success(
+        decision === "ACCEPT" ? "Proposal accepted" : "Proposal rejected"
+      );
       void invalidate();
     },
     onError: (error: Error) => toast.error(error.message),
@@ -38,58 +48,117 @@ export function DecisionActions({ proposal, isInvestor, isRepresentative }: Prop
   });
 
   const isOpen =
-    proposal.status === "SUBMITTED" || proposal.status === "UNDER_NEGOTIATION";
+    proposal.status === "SUBMITTED" ||
+    proposal.status === "UNDER_NEGOTIATION";
 
   if (!isOpen) return null;
   if (!isInvestor && !isRepresentative) return null;
 
+  const pending = decide.isPending || withdraw.isPending;
+
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-white px-4 py-3 shadow-sm">
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
-          {isRepresentative ? "Awaiting your decision" : "Pending review"}
-        </p>
-        <p className="text-sm text-zinc-700">
-          {isRepresentative
-            ? "Accept the terms, reject, or send a counter-offer below."
-            : "You can withdraw the proposal at any time before a decision."}
-        </p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {isRepresentative ? (
-          <>
-            <button
-              type="button"
-              onClick={() => decide.mutate("REJECT")}
-              disabled={decide.isPending}
-              className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-rose-700 shadow-sm transition hover:bg-rose-50 disabled:opacity-50"
-            >
-              <X className="h-3.5 w-3.5" />
-              Reject
-            </button>
-            <button
-              type="button"
-              onClick={() => decide.mutate("ACCEPT")}
-              disabled={decide.isPending}
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
-            >
-              <Check className="h-3.5 w-3.5" />
-              Accept
-            </button>
-          </>
-        ) : null}
-        {isInvestor ? (
-          <button
-            type="button"
-            onClick={() => withdraw.mutate()}
-            disabled={withdraw.isPending}
-            className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50"
+    <section className="overflow-hidden rounded-sm border border-emerald-950/15 bg-linear-to-br from-emerald-50/70 via-white to-lime-50/30 shadow-[0_1px_0_rgba(0,0,0,0.02)] dark:border-emerald-400/15 dark:from-emerald-950/30 dark:via-stone-900/60 dark:to-stone-900/60">
+      <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden
+            className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full border border-emerald-700/30 bg-white text-emerald-700 dark:border-emerald-400/30 dark:bg-stone-900 dark:text-emerald-300"
           >
-            <Undo2 className="h-3.5 w-3.5" />
-            Withdraw
-          </button>
-        ) : null}
+            <Gavel className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-800/80 dark:text-emerald-300/80">
+              {isRepresentative ? "Awaiting your decision" : "Pending review"}
+            </p>
+            <p
+              className="mt-0.5 font-serif text-sm italic text-stone-700 dark:text-stone-300"
+              style={{ fontFamily: "var(--font-fraunces)" }}
+            >
+              {isRepresentative
+                ? "Accept the terms, reject, or dispatch a counter-offer below."
+                : "You may withdraw this proposal at any time before a decision."}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {isRepresentative ? (
+            <>
+              <DecisionButton
+                tone="rose"
+                onClick={() => decide.mutate("REJECT")}
+                disabled={pending}
+                pending={decide.isPending && decide.variables === "REJECT"}
+                icon={<X className="h-3.5 w-3.5" />}
+              >
+                Reject
+              </DecisionButton>
+              <DecisionButton
+                tone="emerald"
+                primary
+                onClick={() => decide.mutate("ACCEPT")}
+                disabled={pending}
+                pending={decide.isPending && decide.variables === "ACCEPT"}
+                icon={<Check className="h-3.5 w-3.5" />}
+              >
+                Accept
+              </DecisionButton>
+            </>
+          ) : null}
+          {isInvestor ? (
+            <DecisionButton
+              tone="neutral"
+              onClick={() => withdraw.mutate()}
+              disabled={pending}
+              pending={withdraw.isPending}
+              icon={<Undo2 className="h-3.5 w-3.5" />}
+            >
+              Withdraw
+            </DecisionButton>
+          ) : null}
+        </div>
       </div>
-    </div>
+    </section>
+  );
+}
+
+function DecisionButton({
+  children,
+  onClick,
+  disabled,
+  pending,
+  icon,
+  tone,
+  primary,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  pending?: boolean;
+  icon: React.ReactNode;
+  tone: "emerald" | "rose" | "neutral";
+  primary?: boolean;
+}) {
+  const TONE: Record<string, string> = {
+    emerald: primary
+      ? "border-emerald-900 bg-emerald-950 text-stone-50 hover:bg-emerald-900 dark:border-emerald-300 dark:bg-emerald-300 dark:text-emerald-950 dark:hover:bg-emerald-200"
+      : "border-emerald-700/40 bg-white text-emerald-900 hover:bg-emerald-50 dark:border-emerald-400/40 dark:bg-stone-900 dark:text-emerald-200",
+    rose: "border-rose-700/40 bg-white text-rose-800 hover:bg-rose-50 dark:border-rose-400/40 dark:bg-stone-900 dark:text-rose-300",
+    neutral:
+      "border-stone-400/40 bg-white text-stone-700 hover:bg-stone-50 dark:border-stone-500/40 dark:bg-stone-900 dark:text-stone-300",
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-sm border px-3.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] shadow-[0_1px_0_rgba(0,0,0,0.04)] transition-all hover:-translate-y-[1px] hover:shadow-[0_3px_0_rgba(0,0,0,0.06)] disabled:cursor-not-allowed disabled:opacity-50 disabled:translate-y-0",
+        TONE[tone]
+      )}
+    >
+      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : icon}
+      {children}
+    </button>
   );
 }

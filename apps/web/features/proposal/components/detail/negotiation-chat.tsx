@@ -361,30 +361,43 @@ export function NegotiationChat({
   const grouped = useMemo(() => groupByDay(messages), [messages]);
 
   return (
-    <div className="flex h-[640px] flex-col overflow-hidden rounded-2xl border border-emerald-100 bg-linear-to-b from-emerald-50/40 to-white shadow-sm dark:border-emerald-900/40 dark:from-emerald-950/40 dark:to-zinc-950">
+    <div className="flex h-[640px] flex-col overflow-hidden rounded-sm border border-emerald-950/15 bg-white/80 shadow-[0_1px_0_rgba(0,0,0,0.02)] dark:border-emerald-400/15 dark:bg-stone-900/60">
       {/* Connection status banner */}
       {!connected ? (
-        <div className="flex items-center gap-2 bg-amber-500 px-4 py-1.5 text-xs font-medium text-white">
-          <WifiOff className="h-3.5 w-3.5 shrink-0" />
+        <div className="flex items-center gap-2 border-b border-amber-700/30 bg-amber-50 px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-amber-800 dark:border-amber-400/30 dark:bg-amber-950/40 dark:text-amber-200">
+          <WifiOff className="h-3 w-3 shrink-0" />
           Reconnecting… messages will sync when back online
         </div>
       ) : null}
 
-      <header className="flex items-center justify-between border-b border-emerald-100 bg-white/70 px-4 py-3 backdrop-blur dark:border-emerald-900/40 dark:bg-zinc-900/70">
+      <header className="flex items-center justify-between border-b border-emerald-950/10 bg-emerald-50/40 px-5 py-3 dark:border-emerald-400/10 dark:bg-emerald-950/20">
         <div>
-          <p className="text-sm font-semibold text-emerald-950 dark:text-emerald-100">
-            Conversation
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-800 dark:text-emerald-300">
+            The Correspondence
           </p>
-          <p className="text-[11px] text-muted-foreground">
-            {connected ? "Live · messages sync in realtime" : "Offline"}
+          <p
+            className="mt-0.5 font-serif text-[12px] italic text-stone-600 dark:text-stone-400"
+            style={{ fontFamily: "var(--font-fraunces)" }}
+          >
+            {connected
+              ? "Live · messages sync in realtime"
+              : "Offline · messages will retry"}
           </p>
         </div>
         {disabled ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+          <span className="inline-flex items-center gap-1 rounded-sm border border-stone-400/40 bg-stone-100/70 px-2 py-1 text-[9px] font-medium uppercase tracking-[0.16em] text-stone-700 dark:border-stone-500/40 dark:bg-stone-800/60 dark:text-stone-300">
             <Lock className="h-3 w-3" />
             {isClosed ? "Closed" : "Read-only"}
           </span>
-        ) : null}
+        ) : (
+          <span className="inline-flex items-center gap-1.5 text-[9px] font-medium uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-300">
+            <span className="relative inline-flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-600" />
+            </span>
+            Live
+          </span>
+        )}
       </header>
 
       <div className="relative flex-1 overflow-hidden">
@@ -404,10 +417,10 @@ export function NegotiationChat({
                 type="button"
                 onClick={() => void handleLoadEarlier()}
                 disabled={loadingEarlier}
-                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-white px-3 py-1 text-[11px] font-medium text-emerald-800 shadow-sm transition hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-900/40 dark:bg-zinc-900 dark:text-emerald-200"
+                className="inline-flex items-center gap-1.5 rounded-sm border border-emerald-950/15 bg-white px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-800 shadow-[0_1px_0_rgba(0,0,0,0.04)] transition-colors hover:border-emerald-700/40 hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-400/15 dark:bg-stone-900 dark:text-emerald-300"
               >
                 <ChevronUp className="h-3 w-3" />
-                {loadingEarlier ? "Loading…" : "Load earlier messages"}
+                {loadingEarlier ? "Loading…" : "Load earlier"}
               </button>
             </div>
           ) : null}
@@ -418,12 +431,17 @@ export function NegotiationChat({
             <div className="flex flex-col gap-4">
               {grouped.map((day) => (
                 <div key={day.label} className="flex flex-col gap-2">
-                  <div className="my-1 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-emerald-100 dark:bg-emerald-900/50" />
-                    <span className="rounded-full bg-emerald-100/60 px-2.5 py-0.5 text-[10px] font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
+                  <div className="my-1 flex items-center gap-3" aria-hidden>
+                    <span className="h-px flex-1 bg-linear-to-r from-transparent via-emerald-900/20 to-emerald-900/20 dark:via-emerald-400/20 dark:to-emerald-400/20" />
+                    <span className="h-1.5 w-1.5 rotate-45 bg-emerald-700 dark:bg-emerald-400" />
+                    <span
+                      className="font-serif text-[11px] italic text-emerald-900/80 dark:text-emerald-300/80"
+                      style={{ fontFamily: "var(--font-fraunces)" }}
+                    >
                       {day.label}
                     </span>
-                    <div className="h-px flex-1 bg-emerald-100 dark:bg-emerald-900/50" />
+                    <span className="h-1.5 w-1.5 rotate-45 bg-emerald-700 dark:bg-emerald-400" />
+                    <span className="h-px flex-1 bg-linear-to-l from-transparent via-emerald-900/20 to-emerald-900/20 dark:via-emerald-400/20 dark:to-emerald-400/20" />
                   </div>
                   {day.messages.map((m, i) => {
                     const prev = day.messages[i - 1];
@@ -455,7 +473,7 @@ export function NegotiationChat({
           <button
             type="button"
             onClick={() => scrollToBottom("smooth")}
-            className="absolute bottom-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-[11px] font-medium text-white shadow-md transition hover:bg-emerald-700"
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-sm border border-emerald-900 bg-emerald-950 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-stone-50 shadow-[0_3px_0_rgba(0,0,0,0.2)] transition-colors hover:bg-emerald-900 dark:border-emerald-300 dark:bg-emerald-300 dark:text-emerald-950 dark:hover:bg-emerald-200"
           >
             <ArrowDown className="h-3 w-3" />
             {unreadCount} new {unreadCount === 1 ? "message" : "messages"}
@@ -465,26 +483,29 @@ export function NegotiationChat({
 
       {/* Typing indicator */}
       {typingUsers.length > 0 ? (
-        <div className="flex items-center gap-1.5 border-t border-emerald-50 bg-white/60 px-4 py-1.5 dark:border-emerald-900/20 dark:bg-zinc-900/60">
-          <span className="flex gap-0.5">
+        <div className="flex items-center gap-2 border-t border-emerald-950/10 bg-stone-50/50 px-5 py-1.5 dark:border-emerald-400/10 dark:bg-stone-900/40">
+          <span className="flex gap-0.5" aria-hidden>
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
                 style={{ animationDelay: `${i * 0.15}s` }}
-                className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-emerald-500"
+                className="inline-block h-1 w-1 animate-bounce rounded-full bg-emerald-700 dark:bg-emerald-400"
               />
             ))}
           </span>
-          <span className="text-[11px] text-muted-foreground">
+          <span
+            className="font-serif text-[11px] italic text-stone-600 dark:text-stone-400"
+            style={{ fontFamily: "var(--font-fraunces)" }}
+          >
             {typingUsers.map((u) => u.name ?? "Someone").join(", ")}{" "}
-            {typingUsers.length === 1 ? "is" : "are"} typing…
+            {typingUsers.length === 1 ? "is" : "are"} writing…
           </span>
         </div>
       ) : null}
 
       <form
         className={cn(
-          "flex flex-col gap-2 border-t border-emerald-100 bg-white/80 p-3 backdrop-blur dark:border-emerald-900/40 dark:bg-zinc-900/70",
+          "flex flex-col gap-2 border-t border-emerald-950/10 bg-stone-50/40 p-3 dark:border-emerald-400/10 dark:bg-stone-900/40",
           disabled && "opacity-70"
         )}
         onSubmit={(e) => {
@@ -499,16 +520,18 @@ export function NegotiationChat({
             {pendingFiles.map((f, i) => (
               <div
                 key={i}
-                className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] dark:border-emerald-900/40 dark:bg-emerald-950/40"
+                className="flex items-center gap-1.5 rounded-sm border border-emerald-700/30 bg-emerald-50/60 px-2 py-1 text-[11px] dark:border-emerald-400/30 dark:bg-emerald-950/40"
               >
                 <Paperclip className="h-3 w-3 text-emerald-700 dark:text-emerald-300" />
-                <span className="max-w-[120px] truncate text-emerald-900 dark:text-emerald-200">
+                <span className="max-w-[120px] truncate font-mono text-[10px] text-emerald-900 dark:text-emerald-200">
                   {f.name}
                 </span>
                 <button
                   type="button"
-                  onClick={() => setPendingFiles((prev) => prev.filter((_, j) => j !== i))}
-                  className="text-rose-500 hover:text-rose-700"
+                  onClick={() =>
+                    setPendingFiles((prev) => prev.filter((_, j) => j !== i))
+                  }
+                  className="text-rose-600 hover:text-rose-800 dark:text-rose-400"
                   aria-label={`Remove ${f.name}`}
                 >
                   <X className="h-3 w-3" />
@@ -536,7 +559,7 @@ export function NegotiationChat({
             type="button"
             disabled={disabled}
             onClick={() => fileInputRef.current?.click()}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-emerald-200 bg-white text-emerald-700 shadow-sm transition hover:bg-emerald-50 disabled:opacity-40 dark:border-emerald-900/40 dark:bg-zinc-900 dark:text-emerald-300"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-sm border border-emerald-950/15 bg-white text-emerald-800 shadow-[0_1px_0_rgba(0,0,0,0.04)] transition-colors hover:border-emerald-700/40 hover:bg-emerald-50 disabled:opacity-40 dark:border-emerald-400/15 dark:bg-stone-900 dark:text-emerald-300"
             aria-label="Attach files"
           >
             <Paperclip className="h-4 w-4" />
@@ -555,7 +578,8 @@ export function NegotiationChat({
             }}
             placeholder={placeholder}
             disabled={disabled}
-            className="max-h-40 min-h-10 resize-none rounded-2xl border-emerald-200 bg-white px-4 py-2.5 text-sm focus-visible:ring-emerald-300 dark:border-emerald-900/40 dark:bg-zinc-900 dark:text-zinc-100"
+            className="max-h-40 min-h-10 resize-none rounded-sm border border-emerald-950/15 bg-white px-3.5 py-2.5 font-serif text-[14px] italic leading-relaxed text-emerald-950 placeholder:italic placeholder:text-stone-400 focus-visible:border-emerald-700 focus-visible:ring-0 dark:border-emerald-400/15 dark:bg-stone-900 dark:text-emerald-50"
+            style={{ fontFamily: "var(--font-fraunces)" }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -565,8 +589,13 @@ export function NegotiationChat({
           />
           <button
             type="submit"
-            disabled={disabled || send.isPending || uploading || (body.trim().length === 0 && pendingFiles.length === 0)}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-zinc-300 dark:disabled:bg-zinc-700"
+            disabled={
+              disabled ||
+              send.isPending ||
+              uploading ||
+              (body.trim().length === 0 && pendingFiles.length === 0)
+            }
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-sm border border-emerald-900 bg-emerald-950 text-stone-50 shadow-[0_1px_0_rgba(0,0,0,0.3)] transition-colors hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-emerald-300 dark:bg-emerald-300 dark:text-emerald-950 dark:hover:bg-emerald-200"
             aria-label="Send message"
           >
             <Send className="h-4 w-4" />
@@ -579,15 +608,22 @@ export function NegotiationChat({
 
 function EmptyChat() {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-      <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+    <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+      <div className="grid h-12 w-12 place-items-center rounded-full border border-emerald-800/25 bg-white text-emerald-800 dark:border-emerald-400/25 dark:bg-stone-950 dark:text-emerald-300">
         <Send className="h-5 w-5" />
       </div>
-      <p className="text-sm font-medium text-emerald-950 dark:text-emerald-100">
-        Start the conversation
+      <p
+        className="font-serif text-xl italic text-emerald-950 dark:text-emerald-100"
+        style={{ fontFamily: "var(--font-fraunces)" }}
+      >
+        Begin the correspondence
       </p>
-      <p className="text-xs text-muted-foreground">
-        Messages between investor and representative appear here.
+      <p
+        className="max-w-xs font-serif text-[13px] italic text-stone-500 dark:text-stone-400"
+        style={{ fontFamily: "var(--font-fraunces)" }}
+      >
+        Messages between the investor and the cluster representative will
+        appear here, preserved in order.
       </p>
     </div>
   );

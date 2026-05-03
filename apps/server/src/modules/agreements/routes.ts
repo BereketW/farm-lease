@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "@farm-lease/db";
-import { AgreementStatus, Prisma, Role } from "@prisma/client";
+import { AgreementStatus, Prisma, ResourceCategory, Role } from "@prisma/client";
 import { requireActive, requireRole, requireSession } from "../../lib/auth";
 import { logAudit } from "../../lib/audit";
 import { realtime } from "../../realtime/io";
@@ -98,6 +98,71 @@ router.get("/:id", async (req, res, next) => {
     });
 
     return res.json({ agreement, receipts });
+  } catch (error) {
+    next(error);
+  }
+});
+
+const resourcesQuerySchema = z.object({
+  category: z.nativeEnum(ResourceCategory).optional(),
+  take: z.coerce.number().int().min(1).max(20).optional(),
+});
+
+router.get("/:id/resources", async (req, res, next) => {
+  try {
+    const parsed = resourcesQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "INVALID_QUERY", issues: parsed.error.issues });
+    }
+
+    const agreement = await loadAgreementContext(req.params.id);
+    if (!agreement) return res.status(404).json({ error: "NOT_FOUND" });
+    if (!canViewAgreement(agreement, req.user!)) {
+      return res.status(403).json({ error: "FORBIDDEN" });
+    }
+
+    const agreementContext = await prisma.agreement.findUnique({
+      where: { id: agreement.id },
+      select: {
+        proposal: {
+          select: {
+            cropIntended: true,
+            cluster: { select: { region: true, cropTypes: true } },
+          },
+        },
+      },
+    });
+
+    const region = agreementContext?.proposal.cluster.region ?? null;
+    const crops = [
+      agreementContext?.proposal.cropIntended,
+      ...(agreementContext?.proposal.cluster.cropTypes ?? []),
+    ].filter((value): value is string => !!value);
+
+    const resources = await prisma.resourceSuggestion.findMany({
+      where: {
+        isActive: true,
+        category: parsed.data.category,
+        ...(region
+          ? {
+              OR: [{ region }, { region: null }],
+            }
+          : {}),
+        ...(crops.length > 0
+          ? {
+              AND: [
+                {
+                  OR: [{ cropTypes: { hasSome: crops } }, { cropTypes: { isEmpty: true } }],
+                },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ isRecommended: "desc" }, { updatedAt: "desc" }],
+      take: parsed.data.take ?? 10,
+    });
+
+    return res.json({ resources });
   } catch (error) {
     next(error);
   }
@@ -299,7 +364,7 @@ router.patch("/:id/terms", async (req, res, next) => {
     const actor = req.user!;
     const isInvestor = isInvestorOnAgreement(agreement, actor.id);
     const isRep = isRepOnAgreement(agreement, actor.id);
-    if (!isInvestor && !isRep && actor.role !== Role.ADMIN) {
+    if (!isInvestor && !isRep) {
       return res.status(403).json({ error: "FORBIDDEN" });
     }
 

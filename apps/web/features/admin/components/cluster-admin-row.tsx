@@ -6,9 +6,10 @@ import type { ClusterSummary } from "@/lib/api/types";
 import { StatusPill } from "@/components/editorial/status-pill";
 import { cn } from "@farm-lease/ui/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { decideCluster } from "@/features/cluster/datasource/clusters";
+// import { decideCluster } from "@/features/cluster/datasource/clusters";
 import { toast } from "sonner";
 import { Button } from "@farm-lease/ui/components/button";
+import { decideCluster } from "../datasource/clusters";
 
 export function ClusterAdminRow({
   cluster,

@@ -16,6 +16,7 @@
 import {
   ClusterStatus,
   PrismaClient,
+  ResourceCategory,
   Role,
   UserStatus,
 } from "@prisma/client";
@@ -51,6 +52,20 @@ type SeedInvestor = SeedUser & {
   bio: string;
   preferredRegions: string[];
   preferredCrops: string[];
+};
+
+type SeedResourceSuggestion = {
+  id: string;
+  category: ResourceCategory;
+  title: string;
+  description?: string;
+  providerName?: string;
+  contactInfo?: Record<string, string>;
+  region?: string;
+  cropTypes: string[];
+  estimatedCost?: string;
+  notes?: string;
+  isRecommended?: boolean;
 };
 
 /* ──────────────────────────────────────────────────────────────── */
@@ -107,6 +122,70 @@ const REPRESENTATIVES: SeedRep[] = [
     phone: "+251911220303",
     password: "rep123",
     bio: "Coffee-cooperative spokesperson for the Sidama highlands; certified organic-grower liaison.",
+  },
+];
+
+const RESOURCE_SUGGESTIONS: SeedResourceSuggestion[] = [
+  {
+    id: "resource-amh-insurance-1",
+    category: ResourceCategory.INSURANCE,
+    title: "Seasonal Crop Loss Cover",
+    description: "Rainfall and flood-index crop protection tailored for teff and maize growers.",
+    providerName: "Abay Micro-Insurance Cooperative",
+    contactInfo: {
+      phone: "+251-58-220-1144",
+      email: "support@abay-insure.et",
+    },
+    region: "Amhara",
+    cropTypes: ["Teff", "Maize", "Chickpeas"],
+    estimatedCost: "1.8% of insured seasonal value",
+    isRecommended: true,
+  },
+  {
+    id: "resource-oro-labor-1",
+    category: ResourceCategory.LABOR_UNION,
+    title: "Rift Valley Mechanized Labor Union",
+    description: "Certified machine operators and seasonal labor pooling for large maize and wheat blocks.",
+    providerName: "Adama Union Desk",
+    contactInfo: {
+      phone: "+251-22-550-1188",
+      email: "coordination@rv-labor.et",
+    },
+    region: "Oromia",
+    cropTypes: ["Maize", "Wheat", "Sorghum"],
+    estimatedCost: "From ETB 2,500/day per crew",
+    isRecommended: true,
+  },
+  {
+    id: "resource-sid-worker-1",
+    category: ResourceCategory.WORKER_GROUP,
+    title: "Sidama Coffee Harvest Collective",
+    description: "Skilled picking teams experienced in selective red-cherry harvest workflows.",
+    providerName: "Hawassa Cooperative Services",
+    contactInfo: {
+      phone: "+251-46-220-0093",
+      email: "field@sidamaharvest.et",
+    },
+    region: "Sidama",
+    cropTypes: ["Coffee"],
+    estimatedCost: "From ETB 180 per quintal picked",
+    isRecommended: true,
+  },
+  {
+    id: "resource-cross-advisory-1",
+    category: ResourceCategory.ADVISORY,
+    title: "Soil and Input Planning Clinic",
+    description: "Bi-seasonal soil analysis and fertilizer plan advisory for investor-managed clusters.",
+    providerName: "FarmLease Advisory Network",
+    contactInfo: {
+      phone: "+251-11-667-9012",
+      email: "advisory@farmlease.et",
+      website: "https://advisory.farmlease.et",
+    },
+    cropTypes: [],
+    estimatedCost: "From ETB 12,000 per cluster assessment",
+    notes: "Available nationwide; prioritized for active agreements.",
+    isRecommended: true,
   },
 ];
 
@@ -491,6 +570,41 @@ async function main() {
       `📍  ${c.name} · ${c.region} · ${c.farmerIds.length} farmers · ${c.status}`,
     );
   }
+
+  for (const resource of RESOURCE_SUGGESTIONS) {
+    await prisma.resourceSuggestion.upsert({
+      where: { id: resource.id },
+      update: {
+        category: resource.category,
+        title: resource.title,
+        description: resource.description,
+        providerName: resource.providerName,
+        contactInfo: resource.contactInfo,
+        region: resource.region,
+        cropTypes: resource.cropTypes,
+        estimatedCost: resource.estimatedCost,
+        notes: resource.notes,
+        isRecommended: resource.isRecommended ?? false,
+        isActive: true,
+      },
+      create: {
+        id: resource.id,
+        category: resource.category,
+        title: resource.title,
+        description: resource.description,
+        providerName: resource.providerName,
+        contactInfo: resource.contactInfo,
+        region: resource.region,
+        cropTypes: resource.cropTypes,
+        estimatedCost: resource.estimatedCost,
+        notes: resource.notes,
+        isRecommended: resource.isRecommended ?? false,
+        isActive: true,
+      },
+    });
+  }
+
+  console.log(`🧩  Resource suggestions: ${RESOURCE_SUGGESTIONS.length}`);
 
   console.log("\n🔐  Credentials");
   console.log("   admin@farmlease.com        / admin123");

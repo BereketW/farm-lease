@@ -1,28 +1,32 @@
--- Post-agreement resource suggestions
--- Provides recommendations for insurance, labor unions, worker groups, etc.
+-- Post-agreement resource suggestions catalog
+-- Matched by agreement region/crop profile at query time.
 
-CREATE TABLE "ResourceSuggestion" (
+CREATE TYPE "ResourceCategory" AS ENUM (
+  'INSURANCE',
+  'LABOR_UNION',
+  'WORKER_GROUP',
+  'EQUIPMENT',
+  'ADVISORY'
+);
+
+CREATE TABLE "resource_suggestions" (
   "id" TEXT NOT NULL,
-  "agreementId" TEXT NOT NULL,
-  "category" TEXT NOT NULL, -- 'INSURANCE', 'LABOR_UNION', 'WORKER_GROUP', 'EQUIPMENT', 'ADVISORY'
+  "category" "ResourceCategory" NOT NULL,
   "title" TEXT NOT NULL,
   "description" TEXT,
   "providerName" TEXT,
-  "contactInfo" JSONB, -- {phone, email, address, website}
-  "region" TEXT, -- Match to cluster region
-  "cropTypes" TEXT[], -- Relevant crop types
+  "contactInfo" JSONB,
+  "region" TEXT,
+  "cropTypes" TEXT[] DEFAULT ARRAY[]::TEXT[],
   "estimatedCost" TEXT,
   "notes" TEXT,
-  "isRecommended" BOOLEAN NOT NULL DEFAULT false, -- Curated by admin
+  "isRecommended" BOOLEAN NOT NULL DEFAULT false,
+  "isActive" BOOLEAN NOT NULL DEFAULT true,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP(3) NOT NULL,
 
-  CONSTRAINT "ResourceSuggestion_pkey" PRIMARY KEY ("id")
+  CONSTRAINT "resource_suggestions_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX "ResourceSuggestion_agreementId_idx" ON "ResourceSuggestion"("agreementId");
-CREATE INDEX "ResourceSuggestion_category_idx" ON "ResourceSuggestion"("category");
-CREATE INDEX "ResourceSuggestion_region_idx" ON "ResourceSuggestion"("region");
-
-ALTER TABLE "ResourceSuggestion" ADD CONSTRAINT "ResourceSuggestion_agreementId_fkey" 
-  FOREIGN KEY ("agreementId") REFERENCES "Agreement"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+CREATE INDEX "resource_suggestions_category_idx" ON "resource_suggestions"("category");
+CREATE INDEX "resource_suggestions_region_idx" ON "resource_suggestions"("region");

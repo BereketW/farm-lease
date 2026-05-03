@@ -1,6 +1,7 @@
 import { apiFetch, uploadDocuments } from "@/lib/api/client";
 // import { ProposalStatus } from "@/lib/api/types";
 import type {
+  AuditLog,
   NegotiationMessage,
   ProposalDetail,
   ProposalStatus,
@@ -149,6 +150,12 @@ export function markMessagesRead(
     method: "POST",
     body: JSON.stringify({ ids }),
   });
+}
+
+export function fetchProposalAuditLogs(
+  id: string
+): Promise<{ logs: AuditLog[] }> {
+  return apiFetch(`/api/proposals/${id}/audit-logs`);
 }
 
 export { uploadDocuments };

@@ -7,7 +7,7 @@ import { sendEmail } from "./mailer";
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3001",
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // refresh every day
@@ -41,7 +41,7 @@ export const auth = betterAuth({
         type: "string",
         required: false,
         defaultValue: "INVESTOR",
-        input: false, // Disabled to prevent escalation, assigned manually or via specific route
+        input: false,
       },
       status: {
         type: "string",
@@ -56,10 +56,12 @@ export const auth = betterAuth({
       },
     },
   },
-  trustedOrigins: [process.env.WEB_ORIGIN ?? "http://localhost:3001"],
+  trustedOrigins: [
+    process.env.WEB_ORIGIN ?? "http://localhost:3001",
+    process.env.API_ORIGIN ?? "http://localhost:3000",
+  ],
 });
 
 export const { GET, POST } = toNextJsHandler(auth);
 
 export type Auth = typeof auth;
-

@@ -1,24 +1,47 @@
-import { RegisterClusterForm } from "@/features/cluster/components/register-cluster-form";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { DashboardContent } from "@/components/layout/dashboard-content";
+import { Masthead, PaperGrain } from "@/components/editorial";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { RegisterClusterForm } from "../components/register-cluster-form";
 
 export function RegisterClusterScreen() {
+  const router = useRouter();
+  const { isLoading, isAuthed, role } = useAuth();
+
+  const allowed = role === "REPRESENTATIVE" || role === "FARMER";
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!isAuthed) router.replace("/login");
+    else if (!allowed) router.replace("/clusters");
+  }, [isLoading, isAuthed, allowed, router]);
+
+  if (isLoading || !isAuthed || !allowed) {
+    return (
+      <div className="flex flex-1 items-center justify-center bg-stone-50/60 py-24 dark:bg-stone-950/60">
+        <Loader2 className="size-6 animate-spin text-emerald-700" />
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex flex-1 flex-col bg-stone-50/60 dark:bg-stone-950/60">
-      <header className="border-b border-emerald-950/15 bg-white px-6 py-8 dark:border-emerald-400/15 dark:bg-stone-950 sm:px-10 lg:px-14">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-stone-950 dark:text-stone-50">
-              Register a <span className="font-semibold text-emerald-800 dark:text-emerald-300">New Cluster</span>
-            </h1>
-            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-              Fill in the details to register your farming cluster for verification.
-            </p>
-          </div>
+      <PaperGrain />
+      <DashboardContent>
+        <div className="space-y-8">
+          <Masthead
+            kicker="Cluster Registry"
+            title="Register a cluster"
+            italicWord="cluster"
+            lede="Submit a government-recognized farming cluster — its identity, geography, membership, and land documentation — for verification."
+          />
+          <RegisterClusterForm />
         </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-3xl px-4 py-8">
-        <RegisterClusterForm />
-      </main>
+      </DashboardContent>
     </div>
   );
 }

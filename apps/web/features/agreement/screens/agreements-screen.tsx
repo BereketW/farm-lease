@@ -8,6 +8,10 @@ import { cn } from "@farm-lease/ui/lib/utils";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 
 import { Metric } from "@/components/editorial";
+import {
+  DashboardContent,
+  DashboardHeaderInner,
+} from "@/components/layout/dashboard-content";
 import { AgreementsTable } from "../components/dashboard/agreements-table";
 
 const STATUS_FILTERS: Array<{ id: AgreementStatus | "ALL", label: string }> = [
@@ -66,23 +70,20 @@ export function AgreementsScreen() {
 
   return (
     <div className="relative flex flex-1 flex-col bg-stone-50/60 dark:bg-stone-950/60">
-      <header className="border-b border-emerald-950/15 bg-white px-6 py-8 dark:border-emerald-400/15 dark:bg-stone-950 sm:px-10 lg:px-14">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-stone-950 dark:text-stone-50">
-              {firstWord}{" "}
-              <span className="font-semibold text-emerald-800 dark:text-emerald-300">
-                {restOfTitle}
-              </span>
-            </h1>
-            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-              {lede}
-            </p>
-          </div>
-        </div>
+      <PaperGrain />
+
+      <header className="relative border-b border-emerald-950/15 bg-gradient-to-b from-stone-50/90 to-transparent px-6 pb-10 pt-10 dark:border-emerald-400/15 dark:from-stone-950/80 sm:px-10 lg:px-14">
+        <DashboardHeaderInner>
+          <Masthead
+            publication="FarmLease · Agreement Ledger"
+            kicker={role.kicker}
+            title={role.title}
+            lede={lede}
+          />
+        </DashboardHeaderInner>
       </header>
 
-      <main className="relative mx-auto w-full max-w-[1400px] px-6 py-10 sm:px-10 lg:px-14">
+      <DashboardContent>
         <div className="space-y-8">
           {/* Almanac / Metrics */}
           <section>
@@ -191,7 +192,7 @@ export function AgreementsScreen() {
 
           <AgreementsTable agreements={visible} isLoading={query.isLoading} />
         </div>
-      </main>
+      </DashboardContent>
     </div>
   );
 }

@@ -80,7 +80,53 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+// ---------- AVAILABLE FARMERS (for registration picker) ----------
+
+router.get(
+  "/farmers/available",
+  requireRole(Role.FARMER, Role.REPRESENTATIVE, Role.ADMIN),
+  async (req, res, next) => {
+    try {
+      const search =
+        typeof req.query.search === "string" ? req.query.search.trim() : "";
+      const farmers = await prisma.user.findMany({
+        where: {
+          role: Role.FARMER,
+          status: "ACTIVE",
+          ...(search
+            ? {
+                OR: [
+                  { name: { contains: search, mode: "insensitive" } },
+                  { email: { contains: search, mode: "insensitive" } },
+                ],
+              }
+            : {}),
+        },
+        select: { id: true, name: true, email: true },
+        orderBy: { name: "asc" },
+        take: 50,
+      });
+      return res.json({ farmers });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 // ---------- REGISTER CLUSTER ----------
+
+/**
+ * Fields submitted via multipart/form-data arrive as strings, so any
+ * array fields must be JSON-decoded before Zod validates them.
+ */
+const parseJsonArray = (val: unknown) => {
+  if (typeof val !== "string") return val;
+  try {
+    return JSON.parse(val);
+  } catch {
+    return val;
+  }
+};
 
 const registerSchema = z.object({
   name: z.string().min(3).max(200),
@@ -88,10 +134,20 @@ const registerSchema = z.object({
   location: z.string().min(3),
   region: z.string().min(2),
   totalArea: z.coerce.number().positive(),
-  cropTypes: z.array(z.string()).min(1),
+  cropTypes: z.preprocess(parseJsonArray, z.array(z.string()).min(1)),
   geodata: z.string(), // JSON string
   coordinates: z.string(), // JSON string
-  farmers: z.array(z.object({ userId: z.string(), landShare: z.coerce.number().positive() })).min(1),
+  farmers: z.preprocess(
+    parseJsonArray,
+    z
+      .array(
+        z.object({
+          userId: z.string(),
+          landShare: z.coerce.number().positive(),
+        })
+      )
+      .min(1)
+  ),
 });
 
 router.post(

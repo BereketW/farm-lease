@@ -3,17 +3,16 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
-import { Badge } from "@farm-lease/ui/components/badge";
 import { Button } from "@farm-lease/ui/components/button";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@farm-lease/ui/components/popover";
-import { Separator } from "@farm-lease/ui/components/separator";
 import { NotificationList } from "./notification-list";
 import type { NotificationItemData } from "./notification-item";
 import { extractUrl, useNotifications } from "../hooks/use-notifications";
+import { cn } from "@farm-lease/ui/lib/utils";
 
 export function NotificationBell() {
     const router = useRouter();
@@ -41,46 +40,44 @@ export function NotificationBell() {
         }
     };
 
-    return (
-        <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <Button
-                    variant="outline"
-                    size="icon"
-                    className="relative"
-                    aria-label="Notifications"
-                >
-                    <Bell className="h-4 w-4" />
-                    {unreadCount > 0 ? (
-                        <Badge
-                            variant="destructive"
-                            className="absolute -right-1 -top-1 h-5 min-w-5 justify-center rounded-full px-1 text-[10px]"
-                        >
-                            {unreadCount > 9 ? "9+" : unreadCount}
-                        </Badge>
-                    ) : null}
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-[360px] p-3 bg-background">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold">Notifications</h3>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={readAll.isPending || unreadCount === 0}
-                        onClick={() => readAll.mutate()}
-                    >
-                        Mark all as read
-                    </Button>
-                </div>
-                <Separator className="my-2" />
-                <NotificationList
-                    notifications={notifications}
-                    isLoading={query.isLoading}
-                    isUnauthorized={isUnauthorized}
-                    onSelect={handleSelect}
-                />
-            </PopoverContent>
-        </Popover>
-    );
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="relative rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950"
+          aria-label="Notifications"
+        >
+          <Bell className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+          {unreadCount > 0 ? (
+            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-emerald-600 ring-2 ring-background" />
+          ) : null}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-[360px] p-0 shadow-xl border-emerald-950/10 dark:border-emerald-400/10">
+        <div className="flex items-center justify-between border-b border-emerald-950/10 px-4 py-3 dark:border-emerald-400/10">
+          <h3
+            className="font-serif italic text-emerald-950 dark:text-emerald-50"
+            style={{ fontFamily: "var(--font-fraunces)" }}
+          >
+            Notifications
+          </h3>
+          <button
+            className="text-[10px] font-medium uppercase tracking-[0.22em] text-stone-500 transition-colors hover:text-emerald-800 dark:text-stone-400 dark:hover:text-emerald-400"
+            disabled={readAll.isPending || unreadCount === 0}
+            onClick={() => readAll.mutate()}
+          >
+            Mark all read
+          </button>
+        </div>
+        <NotificationList
+          notifications={notifications}
+          isLoading={query.isLoading}
+          isUnauthorized={isUnauthorized}
+          onSelect={handleSelect}
+        />
+      </PopoverContent>
+    </Popover>
+  );
 }

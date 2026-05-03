@@ -5,8 +5,11 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 export const API_BASE_URL = API_BASE;
 
 function devHeaders(): HeadersInit {
+  // Only send impersonation headers if specifically requested for local testing
   const devUserId =
-    process.env.NODE_ENV !== "production" ? getDevUserId() : null;
+    process.env.NEXT_PUBLIC_ALLOW_DEV_IMPERSONATION === "true" 
+      ? getDevUserId() 
+      : null;
   return devUserId ? { "x-dev-user-id": devUserId } : {};
 }
 

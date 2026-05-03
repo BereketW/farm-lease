@@ -1,1 +1,1 @@
-export { authClient, signIn, signOut, signUp, useSession } from "@farm-lease/auth/client";
+export { authClient, signIn, signOut, signUp, useSession, emailOtp } from "@farm-lease/auth/client";

@@ -3,6 +3,8 @@ import type {
   AgreementDetail,
   AgreementSignature,
   AgreementStatus,
+  ResourceCategory,
+  ResourceSuggestion,
   AgreementSummary,
   PaymentReceipt,
 } from "@/lib/api/types";
@@ -63,4 +65,15 @@ export function decideReceipt(
     method: "POST",
     body: JSON.stringify({ decision, reason }),
   });
+}
+
+export function listAgreementResources(
+  agreementId: string,
+  params?: { category?: ResourceCategory; take?: number }
+): Promise<{ resources: ResourceSuggestion[] }> {
+  const qs = new URLSearchParams();
+  if (params?.category) qs.set("category", params.category);
+  if (typeof params?.take === "number") qs.set("take", String(params.take));
+  const query = qs.toString();
+  return apiFetch(`/api/agreements/${agreementId}/resources${query ? `?${query}` : ""}`);
 }

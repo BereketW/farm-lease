@@ -37,8 +37,8 @@ export function NotificationList({
   }
 
   return (
-    <ScrollArea className="h-[320px] pr-2">
-      <ul className="space-y-2">
+    <ScrollArea className="h-[320px]">
+      <ul className="divide-y divide-emerald-950/5 dark:divide-emerald-400/5">
         {notifications.map((notification) => (
           <li key={notification.id}>
             <NotificationItem notification={notification} onSelect={onSelect} />

@@ -46,7 +46,10 @@ export async function submitProposal(req: Request, res: Response) {
     select: {
       id: true,
       name: true,
-      representatives: { select: { userId: true, isPrimary: true } },
+      representatives: { 
+        where: { isPrimary: true },
+        select: { userId: true } 
+      },
     },
   });
   if (!cluster) return res.status(404).json({ error: "CLUSTER_NOT_FOUND" });
@@ -70,7 +73,7 @@ export async function submitProposal(req: Request, res: Response) {
     },
   });
 
-  const primaryRepId = (cluster.representatives.find((r) => r.isPrimary) ?? cluster.representatives[0])?.userId;
+  const primaryRepId = cluster.representatives[0]?.userId;
   if (primaryRepId) {
     await proposalSubmittedEvent({
       representativeIds: [primaryRepId],
@@ -140,6 +143,7 @@ export async function getProposal(req: Request, res: Response) {
     id: actor.id,
     isInvestor: proposal.investorId === actor.id,
     isRepresentative: proposal.cluster.representatives.some((r) => r.userId === actor.id),
+    isAdmin: actor.role === Role.ADMIN,
   };
   return res.json({ proposal, viewer });
 }
@@ -244,6 +248,11 @@ export async function createRevision(req: Request, res: Response) {
   }
 
   const data = parsed.data;
+  
+  const previousTerms = proposal.terms;
+  const previousBudget = proposal.budget;
+  const previousDuration = proposal.durationMonths;
+
   const updated = await prisma.proposal.update({
     where: { id: proposal.id },
     data: {
@@ -252,6 +261,25 @@ export async function createRevision(req: Request, res: Response) {
       budget: new Prisma.Decimal(data.budget),
       durationMonths: data.durationMonths,
     },
+  });
+
+  logAudit({
+    actorId: actor.id,
+    action: "TERMS_EDITED",
+    targetType: "Proposal",
+    targetId: proposal.id,
+    details: JSON.parse(JSON.stringify({
+      from: {
+        terms: previousTerms,
+        budget: previousBudget,
+        durationMonths: previousDuration,
+      },
+      to: {
+        terms: data.terms,
+        budget: data.budget,
+        durationMonths: data.durationMonths,
+      },
+    })),
   });
 
   const author = await prisma.user.findUnique({
@@ -360,7 +388,8 @@ export async function postMessage(req: Request, res: Response) {
       recipientIds: [recipientId],
       proposalId: proposal.id,
       senderName: message.sender.name ?? "Counterparty",
-      preview: parsed.data.message.slice(0, 140),
+      preview: parsed.data.counterTerms ? "A counter-offer has been proposed." : parsed.data.message.slice(0, 140),
+      isCounterOffer: !!parsed.data.counterTerms,
     });
   }
 
@@ -437,7 +466,7 @@ export async function updateProposalDraft(req: Request, res: Response) {
     select: { id: true, investorId: true, status: true },
   });
   if (!existing) return res.status(404).json({ error: "NOT_FOUND" });
-  if (existing.investorId !== actor.id && actor.role !== Role.ADMIN) {
+  if (existing.investorId !== actor.id) {
     return res.status(403).json({ error: "FORBIDDEN" });
   }
   if (existing.status !== ProposalStatus.DRAFT) {
@@ -491,13 +520,16 @@ export async function submitProposalDraft(req: Request, res: Response) {
         select: {
           id: true,
           name: true,
-          representatives: { select: { userId: true, isPrimary: true } },
+          representatives: { 
+            where: { isPrimary: true },
+            select: { userId: true } 
+          },
         },
       },
     },
   });
   if (!existing) return res.status(404).json({ error: "NOT_FOUND" });
-  if (existing.investorId !== actor.id && actor.role !== Role.ADMIN) {
+  if (existing.investorId !== actor.id) {
     return res.status(403).json({ error: "FORBIDDEN" });
   }
   if (existing.status !== ProposalStatus.DRAFT) {
@@ -535,9 +567,7 @@ export async function submitProposalDraft(req: Request, res: Response) {
     select: { name: true },
   });
 
-  const primaryRepId =
-    (existing.cluster.representatives.find((r) => r.isPrimary) ??
-      existing.cluster.representatives[0])?.userId;
+  const primaryRepId = existing.cluster.representatives[0]?.userId;
   if (primaryRepId) {
     await proposalSubmittedEvent({
       representativeIds: [primaryRepId],
@@ -551,7 +581,7 @@ export async function submitProposalDraft(req: Request, res: Response) {
 }
 
 /**
- * Hard-delete a DRAFT proposal. Owner or admin only.
+ * Hard-delete a DRAFT proposal. Owner only.
  */
 export async function deleteProposalDraft(req: Request, res: Response) {
   const actor = req.user!;
@@ -562,7 +592,7 @@ export async function deleteProposalDraft(req: Request, res: Response) {
     select: { id: true, investorId: true, status: true },
   });
   if (!existing) return res.status(404).json({ error: "NOT_FOUND" });
-  if (existing.investorId !== actor.id && actor.role !== Role.ADMIN) {
+  if (existing.investorId !== actor.id) {
     return res.status(403).json({ error: "FORBIDDEN" });
   }
   if (existing.status !== ProposalStatus.DRAFT) {
@@ -620,4 +650,36 @@ export async function markMessagesRead(req: Request, res: Response) {
   });
 
   return res.json({ ids: flippedIds });
+}
+
+/**
+ * Get audit logs for a proposal. Admin-only endpoint for oversight.
+ * Returns audit entries showing state changes, term edits, and negotiations
+ * with before/after diffs.
+ */
+export async function getProposalAuditLogs(req: Request, res: Response) {
+  const actor = req.user!;
+  if (actor.role !== Role.ADMIN) {
+    return res.status(403).json({ error: "ADMIN_ONLY" });
+  }
+
+  const proposal = await prisma.proposal.findUnique({
+    where: { id: req.params.id },
+    select: { id: true },
+  });
+  if (!proposal) return res.status(404).json({ error: "NOT_FOUND" });
+
+  const logs = await prisma.auditLog.findMany({
+    where: {
+      targetType: "Proposal",
+      targetId: proposal.id,
+    },
+    include: {
+      actor: { select: { id: true, name: true, role: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+
+  return res.json({ logs });
 }

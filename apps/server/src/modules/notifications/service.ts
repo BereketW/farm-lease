@@ -177,14 +177,15 @@ export function negotiationMessageEvent(input: {
   proposalId: string;
   senderName: string;
   preview: string;
+  isCounterOffer?: boolean;
 }) {
   return dispatchNotification({
     type: "NEGOTIATION_MESSAGE",
     recipients: input.recipientIds,
-    title: `New message from ${input.senderName}`,
+    title: input.isCounterOffer ? `Counter-offer from ${input.senderName}` : `New message from ${input.senderName}`,
     message: input.preview,
     metadata: { proposalId: input.proposalId, url: `/proposals/${input.proposalId}` },
-    sendEmail: false,
+    sendEmail: input.isCounterOffer ? true : false,
   });
 }
 

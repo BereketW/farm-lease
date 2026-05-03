@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
+import { StatusBanner } from "./status-banner";
 
 const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
 
@@ -49,6 +50,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar onMobileMenuClick={() => setMobileOpen(true)} />
+        <StatusBanner />
         <main className="flex-1 overflow-auto">
           {children}
         </main>

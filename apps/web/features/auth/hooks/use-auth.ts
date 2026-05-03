@@ -18,6 +18,7 @@ export function useAuth() {
     isFarmer: hasRole(user, "FARMER"),
     isRepresentative: hasRole(user, "REPRESENTATIVE"),
     isAdmin: hasRole(user, "ADMIN"),
+    status: user?.status,
     can: (roles: Role[]) => hasAnyRole(user, roles),
   };
 }

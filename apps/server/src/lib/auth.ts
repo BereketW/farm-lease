@@ -22,10 +22,17 @@ export async function requireSession(
     if (!session?.user?.id) {
       return res.status(401).json({ error: "UNAUTHENTICATED" });
     }
+
+    // Fetch role from database since Better Auth session might not include additionalFields
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true, email: true },
+    });
+
     req.user = {
       id: session.user.id,
-      role: (session.user as { role?: Role | string }).role,
-      email: (session.user as { email?: string | null }).email ?? null,
+      role: user?.role,
+      email: user?.email ?? (session.user as { email?: string | null }).email ?? null,
     };
     next();
   } catch (error) {

@@ -59,6 +59,14 @@ enum ReceiptStatus {
   REJECTED
 }
 
+enum ResourceCategory {
+  INSURANCE
+  LABOR_UNION
+  WORKER_GROUP
+  EQUIPMENT
+  ADVISORY
+}
+
 // ============================================================
 // BETTER AUTH REQUIRED TABLES
 // These are required by Better Auth — do not rename them
@@ -345,6 +353,27 @@ model PaymentReceipt {
   updatedAt          DateTime      @updatedAt
 
   @@map("payment_receipts")
+}
+
+model ResourceSuggestion {
+  id            String           @id @default(uuid())
+  category      ResourceCategory
+  title         String
+  description   String?
+  providerName  String?
+  contactInfo   Json?
+  region        String?
+  cropTypes     String[]
+  estimatedCost String?
+  notes         String?
+  isRecommended Boolean          @default(false)
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([category])
+  @@index([region])
+  @@map("resource_suggestions")
 }
 
 // ============================================================
